@@ -1,32 +1,21 @@
 # Progress
 
 ## >>> ΠΟΥ ΕΧΟΥΜΕ ΜΕΙΝΕΙ (συνέχεια από το σπίτι) <<<
-Repo: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer  (branch `main` = τελευταίο release v1.1.1,
-branch `wip-browser-fallback` = ημιτελής δουλειά, δες παρακάτω).
+Repo: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer (public). Τελευταίο release: **v1.1.2**.
 
-**Πρόβλημα που διορθώνουμε:** σε άλλο PC (`C:\Users\dosma\Downloads\...`) η εφαρμογή σκάει με
-`RuntimeError: Failed to resolve Python.Runtime.Loader.Initialize ... pythonnet\runtime\Python.Runtime.dll`
-(το native παράθυρο pywebview δεν ξεκινά). Δεν το αναπαράγαμε τοπικά (ούτε με «μπλοκαρισμένα» αρχεία Zone.Identifier).
-Πιθανές αιτίες: παλιό .NET Framework (<4.7.2), antivirus/πολιτική, φάκελος Downloads/δίκτυο.
+**Έγινε στην 1.1.2:** fallback όταν το native παράθυρο (pywebview/pythonnet) δεν ξεκινά, π.χ. στο PC `dosma` με
+`Failed to resolve Python.Runtime.Loader.Initialize`: η εφαρμογή ανοίγει σε Edge app mode μέσω τοπικού server
+(token + έλεγχος Host), γράφει το σφάλμα στο `data\startup.log`, και κλείνει όταν κλείσει το παράθυρο.
+Διορθώθηκαν επίσης τα release notes (UTF-8) και οι οδηγίες (SmartScreen, Unblock).
 
-**Λύση που υλοποιούμε (v1.1.2):** fallback χωρίς pythonnet — αν αποτύχει το native παράθυρο, το UI σερβίρεται από
-τοπικό server (127.0.0.1, token + έλεγχος Host) και ανοίγει στο Edge/Chrome σε app mode (`--app=`).
-- [x] `app/server.py` (AppServer: token, /rpc, /ping heartbeat), `app/devserver.py`, `app/main.py` (native -> fallback, `--browser` για δοκιμή, log στο `data/startup.log`)
-- [ ] `app/ui/app.js`: στο browser mode να διαβάζει `?t=TOKEN` από το URL, να στέλνει header `X-Token` στα `/rpc`, και να στέλνει heartbeat `GET /ping` κάθε ~2.5s (μόνο όταν δεν υπάρχει `window.pywebview`)
-- [ ] tests για το server (403 χωρίς token / λάθος Host, ok με token) + δοκιμή `EuroJackpotApp.exe --browser`
-- [ ] (προαιρετικό) αφαίρεση Zone.Identifier από `_internal` κατά την εκκίνηση
-- [ ] README: SmartScreen («More info → Run anyway»), «Unblock» zip, απαιτήσεις (.NET Framework 4.7.2+), τι κάνει το fallback
-- [ ] Bump `app/version.py` σε 1.1.2 + CHANGELOG, `powershell -ExecutionPolicy Bypass -File build\release.ps1 -SkipSeed`
-- [ ] Διόρθωση release notes στο GitHub (έχουν mojibake): στο `build\release.ps1` το `Get-Content CHANGELOG.md` να γίνει `-Encoding UTF8` και το notes file να γράφεται UTF-8 χωρίς BOM· μετά `gh release edit v1.1.0 / v1.1.1 --notes-file ...`
+**Επόμενα βήματα:**
+1. Δοκιμή της 1.1.2 στο PC `dosma` (και εκεί: Ρυθμίσεις → Έλεγχος σύνδεσης για το παλιό 403). Αν το fallback δεν ανοίξει, στείλε το `data\startup.log`.
+2. Splash screen πρώτης εκκίνησης με επιλογή γλώσσας και χώρας (ζήτηση χρήστη).
+3. Mac έκδοση, Allwyn login/παιχνίδι, Home Assistant (βλ. Future).
 
-**Άλλα που περιμένουν (ζήτησες):** splash screen πρώτης εκκίνησης με επιλογή γλώσσας και χώρας.
-**Ανοιχτό:** το 403 του πρώτου PC (αν επιμένει στέλνεις τον «Έλεγχο σύνδεσης» από τις Ρυθμίσεις).
-**Σημείωση:** η εφαρμογή (unsigned exe) δείχνει SmartScreen «Unknown publisher» — κανονικό· λύση μόνο με code-signing πιστοποιητικό (πληρωμένο).
-
-Τρέξιμο για δοκιμή από τον πηγαίο κώδικα: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q`.
-
-Plan: `C:\Users\DimitrisSarlis\.claude\plans\moonlit-honking-dawn.md`
-
+**Σημείωση:** το exe δεν είναι υπογεγραμμένο, οπότε εμφανίζεται SmartScreen «Unknown publisher»· λύση μόνο με code-signing πιστοποιητικό.
+Δοκιμή: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q` (46).
+Release: bump `app/version.py` + `CHANGELOG.md`, μετά `powershell -ExecutionPolicy Bypass -File build\release.ps1 -SkipSeed`.
 ## Done
 - [x] M1 skeleton, venv (.venv), deps
 - [x] M2 db.py, sources/official.py (998 draws 2012->2026-10-13 in ~28s), updater.py
