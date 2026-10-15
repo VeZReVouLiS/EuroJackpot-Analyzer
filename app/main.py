@@ -18,6 +18,7 @@ from .api import Api
 from .db import Database
 from .paths import data_dir, resource_dir
 from .server import AppServer
+from .unblock import unblock_app
 
 
 def _log(msg: str) -> None:
@@ -29,6 +30,9 @@ def _log(msg: str) -> None:
 
 
 def _run_native(api: Api) -> None:
+    n = unblock_app()            # downloaded-from-internet flag blocks pythonnet on some PCs; must precede the import
+    if n:
+        _log(f"removed the internet-download flag from {n} files")
     import webview
 
     index = resource_dir() / "ui" / "index.html"

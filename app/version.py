@@ -1,4 +1,4 @@
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 APP_NAME = "EuroJackpot Analyzer"
 # GitHub "owner/name" used for update checks (GitHub Releases). Empty = update check disabled.
 GITHUB_REPO = "VeZReVouLiS/EuroJackpot-Analyzer"

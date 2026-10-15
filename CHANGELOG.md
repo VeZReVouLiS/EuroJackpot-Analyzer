@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.3
+- Διόρθωση της αιτίας του σφάλματος εκκίνησης (`Failed to resolve Python.Runtime.Loader.Initialize`): τα Windows μαρκάρουν τα αρχεία ενός zip από το internet ως «μπλοκαρισμένα» και σε ορισμένα PC το .NET αρνείται να φορτώσει την DLL. Η εφαρμογή αφαιρεί πλέον μόνη της αυτή τη σήμανση πριν ανοίξει το παράθυρο, χωρίς Unblock. Το fallback σε Edge μένει ως δίχτυ ασφαλείας.
+- Script διάγνωσης `tools/diagnose_pc.ps1` για προβλήματα εκκίνησης.
+
 ## 1.1.2
 - Διόρθωση σφάλματος εκκίνησης σε ορισμένα PC (`Failed to resolve Python.Runtime.Loader.Initialize`): αν το native παράθυρο δεν μπορεί να ανοίξει, η εφαρμογή ανοίγει αυτόματα σε παράθυρο Edge (app mode) και δουλεύει κανονικά. Το σφάλμα γράφεται στο `data\startup.log`.
 - Ο τοπικός server προστατεύεται με μυστικό token και έλεγχο Host.

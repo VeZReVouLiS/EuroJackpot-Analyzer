@@ -79,8 +79,8 @@ Portable πρόγραμμα για Windows που κατεβάζει όλο το
 
 ### 7. Προβλήματα εκκίνησης
 - **«Windows protected your PC» (SmartScreen)**: η εφαρμογή δεν έχει ψηφιακή υπογραφή (πληρωμένο πιστοποιητικό), οπότε τα Windows τη θεωρούν «άγνωστο εκδότη». Πάτα **More info → Run anyway**. Εμφανίζεται μία φορά.
-- **Πριν την εξαγωγή του zip**: δεξί κλικ στο zip → *Properties* → τσέκαρε **Unblock** → OK. Έτσι τα αρχεία δεν σημαίνονται ως «από το internet».
-- **Σφάλμα `Failed to resolve Python.Runtime.Loader.Initialize` ή παρόμοιο**: από την έκδοση 1.1.2 η εφαρμογή ανοίγει αυτόματα σε παράθυρο Edge (app mode) και δουλεύει κανονικά. Το σφάλμα γράφεται στο `data\startup.log`. Αν δεις αυτό το σφάλμα σε παλιότερη έκδοση, κατέβασε την τελευταία.
+- **Σφάλμα `Failed to resolve Python.Runtime.Loader.Initialize` (παλιότερες εκδόσεις)**: τα Windows μαρκάρουν τα αρχεία ενός zip από το internet ως «μπλοκαρισμένα» και σε ορισμένα PC το .NET δεν φορτώνει την DLL. Από την έκδοση 1.1.3 η εφαρμογή αφαιρεί μόνη της τη σήμανση. Σε παλιότερη έκδοση, τρέξε σε PowerShell `Get-ChildItem "<φάκελος εφαρμογής>" -Recurse | Unblock-File`, ή κάνε δεξί κλικ στο zip → *Properties* → **Unblock** πριν την εξαγωγή.
+- Αν παρ' όλα αυτά το native παράθυρο δεν ανοίξει, η εφαρμογή ανοίγει αυτόματα σε παράθυρο Edge (app mode) και δουλεύει κανονικά. Το σφάλμα γράφεται στο `data\startup.log`.
 - **Λευκό παράθυρο ή δεν ανοίγει**: εγκατάστησε το *Microsoft Edge WebView2 Runtime* από τη Microsoft. Αν δεν βοηθήσει, τρέξε το `EuroJackpotApp.exe --browser`.
 - Απαιτήσεις: Windows 10 (1803+) ή 11, με Microsoft Edge.
 
