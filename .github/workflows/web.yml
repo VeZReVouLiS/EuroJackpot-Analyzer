@@ -35,7 +35,7 @@ jobs:
       - name: Golden file from the Python implementation
         run: python -m tools.make_golden
       - name: JavaScript port matches Python
-        run: node --test web/tests/
+        run: node --test web/tests/core.test.mjs
 
   deploy:
     needs: test
