@@ -13,7 +13,8 @@ def test_official_parse_ok():
             {"zahlen": ["35", "20", "22", "17", "11"]}, {"zahlen": ["4", "8"]}]}},
     }
     assert official.parse(payload) == {
-        "date": "2026-10-13", "main": [11, 17, 20, 22, 35], "euro": [4, 8], "source": "eurojackpot.com"}
+        "date": "2026-10-13", "main": [11, 17, 20, 22, 35], "euro": [4, 8], "source": "eurojackpot.com",
+        "details": None}
 
 
 def test_official_parse_no_draw():

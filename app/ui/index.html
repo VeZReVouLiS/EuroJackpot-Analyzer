@@ -20,6 +20,8 @@
       <div class="muted small"><span data-i18n="top.updated"></span>:</div>
       <div id="last-update" class="small strong">—</div>
       <div id="draw-count" class="muted small"></div>
+      <div class="ver"><span class="muted small"><span data-i18n="side.version"></span> <span id="app-version"></span></span>
+        <button id="app-badge" class="badge hidden"></button></div>
     </div>
   </aside>
 
@@ -49,6 +51,10 @@
     <div id="ov-pct" class="strong big">0%</div>
     <button id="ov-btn" class="btn primary"></button>
   </div>
+</div>
+
+<div id="detail" class="overlay hidden">
+  <div class="modal card detail-box"><button id="detail-close" class="btn ghost close-x" aria-label="close">✕</button><div id="detail-body"></div></div>
 </div>
 
 <div id="toast" class="toast hidden"></div>

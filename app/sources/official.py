@@ -1,24 +1,48 @@
 """Official EuroJackpot results (Lotto Hessen WL_InfoService) - full history since 2012-03-23."""
 from __future__ import annotations
 
-import json
-import time
-import urllib.request
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 from typing import Callable
 
 from .. import rules
+from .http import SourceError, get_json
 
 URL = (
     "https://www.eurojackpot.com/wlinfo/WL_InfoService"
     "?client=jsn&gruppe=ZahlenUndQuoten&spielart=EJ&datum={d}"
 )
-UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) EuroJackpotApp/1.0"
+REFERER = "https://www.eurojackpot.com/"
+
+
+def _details(payload: dict) -> dict | None:
+    """Prize classes: winners (all countries) and prize per winner."""
+    try:
+        rows = payload["auswertung"]["quoten"]["hauptlotterie"]["ziehungen"][0]["gewinnklassen"]
+    except (KeyError, IndexError, TypeError):
+        return None
+    classes = []
+    for r in rows:
+        try:
+            classes.append({
+                "cls": int(r["klasse"]),
+                "tier": str(r.get("kurzbeschreibung", "")).replace(" ", ""),
+                "winners": int(r.get("anzahl") or 0),
+                "prize": float(r.get("quote") or 0.0),
+            })
+        except (KeyError, TypeError, ValueError):
+            continue
+    stake = None
+    try:
+        stake = float(payload["auswertung"]["spieleinsatz"]["hauptlotterie"])
+    except (KeyError, TypeError, ValueError):
+        pass
+    return {"classes": classes, "stake_all": stake} if classes else None
 
 
 def parse(payload: dict) -> dict | None:
-    """Return {'date','main','euro','source'} or None when there is no draw on that day."""
+    """Return {'date','main','euro','source','details'} or None when there is no draw on that day."""
     if not payload or payload.get("error") or "head" not in payload:
         return None
     try:
@@ -30,20 +54,12 @@ def parse(payload: dict) -> dict | None:
         return None
     if len(main) != 5 or len(euro) != 2:
         return None
-    return {"date": d, "main": sorted(main), "euro": sorted(euro), "source": "eurojackpot.com"}
+    return {"date": d, "main": sorted(main), "euro": sorted(euro), "source": "eurojackpot.com",
+            "details": _details(payload)}
 
 
-def fetch_day(d: date, retries: int = 3, timeout: int = 25) -> dict | None:
-    req = urllib.request.Request(URL.format(d=d.isoformat()), headers={"User-Agent": UA})
-    last_err: Exception | None = None
-    for attempt in range(retries):
-        try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                return parse(json.loads(r.read().decode("utf-8")))
-        except Exception as e:  # network / json errors -> retry
-            last_err = e
-            time.sleep(0.6 * (attempt + 1))
-    raise ConnectionError(f"official source failed for {d}: {last_err}")
+def fetch_day(d: date) -> dict | None:
+    return parse(get_json(URL.format(d=d.isoformat()), REFERER))
 
 
 def fetch_range(
@@ -51,17 +67,34 @@ def fetch_range(
     end: date,
     skip: set[str] | None = None,
     progress: Callable[[int, int], None] | None = None,
-    workers: int = 8,
+    workers: int = 4,
 ) -> list[dict]:
     skip = skip or set()
     days = [d for d in rules.candidate_dates(start, end) if d.isoformat() not in skip]
+    if not days:
+        return []
+    fetch_day(days[-1])          # probe: fail immediately (not after 1000 retries) if blocked
+    stop = threading.Event()
+
+    def work(d: date):
+        if stop.is_set():
+            return None
+        try:
+            return fetch_day(d)
+        except SourceError:
+            stop.set()           # abort the remaining requests as soon as one fails
+            raise
+
     out: list[dict] = []
     done = 0
     with ThreadPoolExecutor(max_workers=workers) as ex:
-        for res in ex.map(fetch_day, days):
+        for res in ex.map(work, days):
             done += 1
             if res:
                 out.append(res)
             if progress:
                 progress(done, len(days))
     return out
+
+
+__all__ = ["parse", "fetch_day", "fetch_range", "SourceError"]

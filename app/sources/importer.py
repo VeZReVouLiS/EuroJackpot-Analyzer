@@ -57,10 +57,17 @@ def _record(rec) -> dict | None:
     d = None
     main: list[int] = []
     euro: list[int] = []
+    details = None
+    source = "import"
     if isinstance(rec, dict):
         flat: list[int] = []
+        details = rec.get("details") if isinstance(rec.get("details"), dict) else None
+        if isinstance(rec.get("source"), str) and rec["source"]:
+            source = rec["source"]
         for k, v in rec.items():
             kl = str(k).lower()
+            if kl in ("details", "source"):
+                continue
             if d is None and ("date" in kl or "ημερ" in kl or kl in ("draw", "day")):
                 d = parse_date(v)
                 if d:
@@ -100,7 +107,7 @@ def _record(rec) -> dict | None:
     if not d:
         return None
     if main and euro and _valid(sorted(main), sorted(euro)):
-        return {"date": d, "main": sorted(main), "euro": sorted(euro), "source": "import"}
+        return {"date": d, "main": sorted(main), "euro": sorted(euro), "source": source, "details": details}
     return None
 
 

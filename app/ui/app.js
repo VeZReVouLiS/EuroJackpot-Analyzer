@@ -1,7 +1,8 @@
 "use strict";
 /* EuroJackpot Analyzer UI. Talks to Python through window.pywebview.api (or /rpc in dev-server mode). */
 
-const S = { t: {}, settings: {}, info: {}, stats: null, ticket: null, locks: {}, view: "stats", freqKind: "main", charts: [], polling: null };
+const S = { t: {}, settings: {}, info: {}, stats: null, ticket: null, locks: {}, view: "stats", freqKind: "main", charts: [], polling: null,
+  lastError: null, appUpdate: null };
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const ALGO_ORDER = ["auto_ticket", "auto_column", "random", "hot", "cold", "overdue", "weighted", "balanced", "smart"];
@@ -56,6 +57,14 @@ async function refreshInfo() {
   S.settings = S.info.settings;
   $("#last-update").textContent = fmtDT(S.info.last_update);
   $("#draw-count").textContent = `${S.info.count} ${tr("top.draws")}`;
+  $("#app-version").textContent = "v" + S.info.version;
+  updateBadge();
+}
+function updateBadge() {
+  const b = $("#app-badge"), u = S.appUpdate;
+  const show = !!(u && u.newer);
+  b.classList.toggle("hidden", !show);
+  if (show) { b.textContent = "⬆ " + tr("side.newversion", { v: u.latest }); b.onclick = () => showView("settings"); }
 }
 function overlay(show, { title = "", text = "", pct = 0, btn = "" } = {}) {
   $("#overlay").classList.toggle("hidden", !show);
@@ -81,12 +90,14 @@ async function runUpdate({ firstRun = false } = {}) {
     }, 400);
   }).then(async p => {
     $("#btn-update").disabled = false;
-    if (p.error) {
+    overlay(false);
+    if (p.error) {          // never block the app: show the error and (if there is no data) the empty state
+      S.lastError = p.error;
       setStatus(tr("update.error", { err: p.error }), "err");
-      if (firstRun) overlay(true, { title: tr("first.title"), text: tr("update.error", { err: p.error }), btn: tr("first.retry") });
+      await refreshInfo(); await renderAll();
       return;
     }
-    overlay(false);
+    S.lastError = null;
     const r = p.result || {};
     setStatus((r.added ? tr("update.done", r) : tr("update.uptodate", r)) + (r.verified ? "  " + tr("update.verified") : ""), "ok");
     await refreshInfo(); await renderAll();
@@ -115,15 +126,81 @@ const chartBase = () => ({
 });
 const axis = () => ({ ticks: { color: cssVar("--muted") }, grid: { color: "rgba(148,163,196,.15)" } });
 
+/* ---------- empty state (no data: online download failed or not done yet) ---------- */
+function renderEmpty(view) {
+  killCharts();
+  view.innerHTML = `<div class="card empty-state">
+    <div style="font-size:3rem">📭</div><h2>${tr("empty.title")}</h2><p class="muted">${tr("empty.text")}</p>
+    ${S.lastError ? `<div class="errbox"><b>${tr("empty.error")}:</b> ${esc(S.lastError)}</div>` : ""}
+    <div class="actions"><button id="e-import" class="btn primary">${tr("empty.import")}</button>
+      <button id="e-retry" class="btn">${tr("empty.retry")}</button>
+      <button id="e-diag" class="btn">${tr("empty.diag")}</button></div>
+    <div id="e-drop" class="drop" style="width:100%">${tr("empty.drop")}</div><div id="e-diag-out" class="diag" style="width:100%"></div></div>`;
+  $("#e-retry", view).onclick = () => runUpdate({ firstRun: true });
+  $("#e-import", view).onclick = () => pickAndImport();
+  $("#e-diag", view).onclick = () => runDiagnostics($("#e-diag-out", view));
+  wireDrop($("#e-drop", view));
+}
+const afterImport = async r => {
+  if (!r) return;
+  toast(r.found ? tr("settings.import.done", r) : tr("settings.import.none"));
+  S.lastError = null; await refreshInfo(); await renderAll();
+};
+async function pickAndImport() {
+  if (window.pywebview && window.pywebview.api) return afterImport(await call("import_file"));
+  const i = document.createElement("input"); i.type = "file"; i.accept = ".csv,.json,.txt";
+  i.onchange = () => readFile(i.files[0], afterImport); i.click();
+}
+function wireDrop(drop) {
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => readFile(e.dataTransfer.files[0], afterImport));
+}
+async function runDiagnostics(box) {
+  box.innerHTML = `<span class="muted">${tr("app.checking")}</span>`;
+  const rows = await call("diagnose");
+  S.diagReport = rows.map(r => `${r.ok ? "OK " : "ERR"} ${r.name} (${r.ms} ms) ${r.ok ? "" : r.message}`).join("\n");
+  box.innerHTML = rows.map(r => `<div><span class="${r.ok ? "ok" : "bad"}">${r.ok ? "✔" : "✘"}</span> <b>${esc(r.name)}</b> <span class="muted">${r.ms} ms</span>${r.ok ? "" : `<div class="muted small">${esc(r.message)}</div>`}</div>`).join("")
+    + `<div><button class="btn" id="diag-copy">${tr("settings.diag.copy")}</button></div>`;
+  $("#diag-copy", box).onclick = async () => { try { await navigator.clipboard.writeText(`EuroJackpot Analyzer v${S.info.version}\n${S.diagReport}`); toast(tr("ticket.copied")); } catch { toast(S.diagReport); } };
+}
+
+/* ---------- draw details (winners / prizes) ---------- */
+const nf = n => (n ?? 0).toLocaleString(S.settings.lang === "el" ? "el-GR" : "en-GB");
+async function openDraw(dateStr) {
+  const d = await call("get_draw", dateStr);
+  if (!d) return;
+  const det = d.details, cls = det ? det.classes : [];
+  const hasGr = cls.some(c => c.winners_gr != null);
+  const rows = cls.map(c => {
+    const other = (c.winners_gr != null && !c.greek_only) ? c.winners - c.winners_gr : null;
+    const prize = c.prize > 0 ? money(c.prize) : `<span class="muted">${c.winners ? "—" : tr("detail.no_winner")}</span>`;
+    return `<tr class="${c.winners_gr > 0 ? "gr-win" : ""}"><td><b>${esc(c.tier.replace("+", " + "))}</b>${c.greek_only ? `<span class="tag-gr">${tr("detail.greek_only")}</span>` : ""}</td>
+      <td class="num">${c.greek_only ? "—" : nf(c.winners)}</td>
+      <td class="num">${c.winners_gr != null ? nf(c.winners_gr) : "—"}</td>
+      <td class="num">${other != null ? nf(other) : "—"}</td><td class="num">${prize}</td></tr>`;
+  }).join("");
+  const kpi = (l, v) => v != null ? `<div class="kpi"><span class="muted small">${l}</span><b>${v}</b></div>` : "";
+  $("#detail-body").innerHTML = `
+    <div class="dtl-head"><div><h2>${tr("detail.title")} · ${fmtDate(d.date)}${det && det.draw_no ? ` <span class="muted small">(${tr("detail.no", { n: det.draw_no })})</span>` : ""}</h2>
+      ${balls(d, "lg")}</div></div>
+    ${det ? `<div class="kpis">${kpi(tr("detail.columns_all"), det.columns_all ? nf(det.columns_all) : null)}${kpi(tr("detail.columns_gr"), det.columns_gr ? nf(det.columns_gr) : null)}${kpi(tr("detail.stake"), det.stake_all ? money(det.stake_all) : null)}</div>
+    <table><thead><tr><th>${tr("detail.tier")}</th><th class="num">${tr("detail.winners_all")}</th><th class="num">${tr("detail.winners_gr")}</th><th class="num">${tr("detail.winners_other")}</th><th class="num">${tr("detail.prize")}</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="note">${tr("detail.no_country")}${hasGr ? "" : " " + tr("detail.no_greek", { d: "08/03/2024" })}</div>`
+      : `<div class="empty">${tr("detail.no_details")}</div>`}`;
+  $("#detail").classList.remove("hidden");
+}
+const closeDetail = () => $("#detail").classList.add("hidden");
+
 async function renderStats() {
   const view = $("#view-stats");
-  if (!S.info.count) { view.innerHTML = ""; return; }
+  if (!S.info.count) { renderEmpty(view); return; }
   const period = S.settings.period || "all";
   const st = S.stats = await call("get_stats", period);
   const last = st.last_draw;
   view.innerHTML = `
-    <div class="hero card">
-      <div><div class="date">${tr("stats.lastdraw")} · ${fmtDate(last.date)}</div>${balls(last, "lg")}</div>
+    <div class="hero card" id="hero" style="cursor:pointer" title="${tr("detail.title")}">
+      <div><div class="date">${tr("stats.lastdraw")} · ${fmtDate(last.date)} · 🔍</div>${balls(last, "lg")}</div>
       <div class="muted">${tr("stats.analysed", { n: st.n_draws })}<br>${fmtDate(st.first_date)} → ${fmtDate(st.last_date)}</div>
     </div>
     <div class="toolbar"><span class="strong">${tr("stats.period")}:</span>
@@ -149,6 +226,7 @@ async function renderStats() {
       <div class="card"><h3>${tr("stats.pairs")}</h3><div class="pairs">${st.top_pairs.map(p =>
         `<div class="pair">${p.pair.map(n => ball(n, "sm")).join("")}<span class="cnt">${p.count}×</span></div>`).join("")}</div></div>
     </div>`;
+  $("#hero", view).onclick = () => openDraw(last.date);
   $$("[data-period]", view).forEach(b => b.onclick = async () => { await setSetting("period", b.dataset.period); renderStats(); });
   $$("[data-kind]", view).forEach(b => b.onclick = () => { S.freqKind = b.dataset.kind; renderStats(); });
   drawCharts(st);
@@ -198,6 +276,7 @@ function algoLabel(a) { return tr("algo." + a); }
 async function renderTicket() {
   killCharts();
   const view = $("#view-ticket"), cfg = S.settings, tk = S.ticket;
+  if (!S.info.count) { renderEmpty(view); return; }
   view.innerHTML = `
     <h1>${tr("ticket.title")}</h1>
     <div class="card">
@@ -250,10 +329,13 @@ function drawTicket() {
 /* ---------- history ---------- */
 async function renderHistory() {
   killCharts();
+  const view = $("#view-history");
+  if (!S.info.count) { renderEmpty(view); return; }
   const rows = await call("get_draws", 100);
-  $("#view-history").innerHTML = `<h1>${tr("history.title")}</h1><div class="card"><table>
+  view.innerHTML = `<h1>${tr("history.title")}</h1><div class="muted small" style="margin:-.6rem 0 .8rem">🔍 ${tr("detail.title")}…</div><div class="card"><table>
     <thead><tr><th>${tr("history.date")}</th><th>${tr("history.numbers")}</th><th>${tr("history.source")}</th></tr></thead>
-    <tbody>${rows.map(d => `<tr><td class="strong">${fmtDate(d.date)}</td><td>${balls(d, "sm")}</td><td class="muted small">${esc(d.source)}</td></tr>`).join("")}</tbody></table></div>`;
+    <tbody>${rows.map(d => `<tr class="click" data-draw="${d.date}"><td class="strong">${fmtDate(d.date)}</td><td>${balls(d, "sm")}</td><td class="muted small">${esc(d.source)}</td></tr>`).join("")}</tbody></table></div>`;
+  $$("[data-draw]", view).forEach(r => r.onclick = () => openDraw(r.dataset.draw));
 }
 
 /* ---------- settings ---------- */
@@ -261,36 +343,103 @@ function renderSettings() {
   killCharts();
   const s = S.settings;
   const view = $("#view-settings");
-  view.innerHTML = `<h1>${tr("settings.title")}</h1><div class="card">
-    <div class="row"><span class="strong">${tr("settings.language")}</span><div class="chips">
-      <button class="chip ${s.lang === "el" ? "active" : ""}" data-lang="el">Ελληνικά</button><button class="chip ${s.lang === "en" ? "active" : ""}" data-lang="en">English</button></div></div>
-    <div class="row"><span class="strong">${tr("settings.theme")}</span><div class="chips">
-      <button class="chip ${s.theme === "dark" ? "active" : ""}" data-theme="dark">🌙 ${tr("settings.dark")}</button><button class="chip ${s.theme === "light" ? "active" : ""}" data-theme="light">☀️ ${tr("settings.light")}</button></div></div>
-    <div class="row"><div><div class="strong">${tr("settings.auto_update")}</div><div class="muted small">${tr("settings.auto_update.hint")}</div></div>
-      <button id="sw-auto" class="switch ${s.auto_update ? "on" : ""}" aria-label="auto update"></button></div>
-    <div class="row"><div><div class="strong">${tr("settings.data")}</div><div class="muted small">${S.info.count} ${tr("top.draws")} · ${fmtDate(S.info.last_draw)}<br>${tr("settings.sources")}</div></div>
-      <button id="upd" class="btn primary">${tr("settings.update_now")}</button></div></div>
-    <div class="card" style="margin-top:1.1rem"><h3>${tr("settings.import")}</h3><div class="muted small">${tr("settings.import.hint")}</div>
-      <div id="drop" class="drop"><button id="pick" class="btn">${tr("settings.import.choose")}</button></div></div>`;
+  view.innerHTML = `<h1>${tr("settings.title")}</h1>
+    <div class="sect">${tr("settings.section.look")}</div>
+    <div class="card">
+      <div class="row"><span class="strong">${tr("settings.language")}</span><div class="chips">
+        <button class="chip ${s.lang === "el" ? "active" : ""}" data-lang="el">Ελληνικά</button><button class="chip ${s.lang === "en" ? "active" : ""}" data-lang="en">English</button></div></div>
+      <div class="row"><span class="strong">${tr("settings.theme")}</span><div class="chips">
+        <button class="chip ${s.theme === "dark" ? "active" : ""}" data-theme="dark">🌙 ${tr("settings.dark")}</button><button class="chip ${s.theme === "light" ? "active" : ""}" data-theme="light">☀️ ${tr("settings.light")}</button></div></div>
+    </div>
+
+    <div class="sect">🎰 ${tr("settings.section.draws")}</div>
+    <div class="card">
+      <div class="row"><div><div class="strong">${tr("settings.auto_update")}</div><div class="muted small">${tr("settings.auto_update.hint")}</div></div>
+        <button id="sw-auto" class="switch ${s.auto_update ? "on" : ""}" aria-label="auto update"></button></div>
+      <div class="row"><div><div class="strong">${tr("settings.data")}</div><div class="muted small">${S.info.count} ${tr("top.draws")} · ${fmtDate(S.info.last_draw)}<br>${tr("settings.sources")}</div></div>
+        <button id="upd" class="btn primary">🔄 ${tr("settings.update_now")}</button></div>
+      <div class="row" style="display:block"><div class="strong">${tr("settings.export")}</div><div class="muted small">${tr("settings.export.hint")}</div>
+        <div class="btn-row"><button class="btn" data-export="json">💾 ${tr("settings.export.json")}</button><button class="btn" data-export="csv">📄 ${tr("settings.export.csv")}</button></div></div>
+      <div class="row" style="display:block"><div class="strong">${tr("settings.import")}</div><div class="muted small">${tr("settings.import.hint")}</div>
+        <div id="drop" class="drop"><button id="pick" class="btn">${tr("settings.import.choose")}</button></div></div>
+      <div class="row" style="display:block"><div class="strong">${tr("settings.diag")}</div><div class="muted small">${tr("settings.diag.hint")}</div>
+        <div class="btn-row"><button id="diag" class="btn">🩺 ${tr("settings.diag.run")}</button></div><div id="diag-out" class="diag"></div></div>
+    </div>
+
+    <div class="sect">⬆️ ${tr("settings.section.app")}</div>
+    <div class="card">
+      <div class="row"><div><div class="strong">${tr("app.version")}: v${S.info.version}</div><div class="muted small">${tr("app.distinction")}</div></div>
+        <button id="app-check" class="btn primary">${tr("app.check")}</button></div>
+      <div class="row"><div class="strong">${tr("app.auto_check")}</div>
+        <button id="sw-appcheck" class="switch ${s.check_app_updates ? "on" : ""}" aria-label="app update check"></button></div>
+      <div id="app-upd-out"></div>
+    </div>`;
   $$("[data-lang]", view).forEach(b => b.onclick = async () => { await setSetting("lang", b.dataset.lang); await loadLocale(); await refreshInfo(); renderSettings(); });
   $$("[data-theme]", view).forEach(b => b.onclick = async () => { await setSetting("theme", b.dataset.theme); applyTheme(); renderSettings(); });
   $("#sw-auto").onclick = async e => { await setSetting("auto_update", !S.settings.auto_update); e.currentTarget.classList.toggle("on", S.settings.auto_update); };
+  $("#sw-appcheck").onclick = async e => { await setSetting("check_app_updates", !S.settings.check_app_updates); e.currentTarget.classList.toggle("on", S.settings.check_app_updates); };
   $("#upd").onclick = () => runUpdate();
-  const report = r => { if (!r) return; toast(r.found ? tr("settings.import.done", r) : tr("settings.import.none")); refreshInfo(); };
-  $("#pick").onclick = async () => {
-    if (window.pywebview && window.pywebview.api) report(await call("import_file"));
-    else { const i = document.createElement("input"); i.type = "file"; i.accept = ".csv,.json,.txt"; i.onchange = () => readFile(i.files[0], report); i.click(); }
-  };
-  const drop = $("#drop");
-  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
-  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
-  drop.addEventListener("drop", e => readFile(e.dataTransfer.files[0], report));
+  $$("[data-export]", view).forEach(b => b.onclick = () => exportData(b.dataset.export));
+  $("#pick").onclick = () => pickAndImport();
+  wireDrop($("#drop"));
+  $("#diag").onclick = () => runDiagnostics($("#diag-out"));
+  $("#app-check").onclick = () => doAppCheck();
+  renderAppUpdate();
+}
+async function exportData(fmt) {
+  try {
+    if (window.pywebview && window.pywebview.api) {
+      const r = await call("export_file", fmt);
+      if (r) toast(tr("settings.export.done", r));
+    } else {                         // browser / dev mode: normal download
+      const r = await call("export_text", fmt);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([r.text], { type: "text/plain;charset=utf-8" }));
+      a.download = r.filename; a.click();
+      toast(tr("settings.export.done", r));
+    }
+  } catch (e) { toast(e.message || String(e)); }
 }
 function readFile(file, cb) {
   if (!file) return;
   const fr = new FileReader();
   fr.onload = async () => cb(await call("import_text", file.name, fr.result));
   fr.readAsText(file);
+}
+
+/* ---------- application updates (GitHub releases) – separate from draw updates ---------- */
+async function doAppCheck() {
+  const out = $("#app-upd-out"); if (out) out.innerHTML = `<div class="muted" style="padding:.8rem 0">${tr("app.checking")}</div>`;
+  S.appUpdate = await call("check_app_update");
+  updateBadge(); renderAppUpdate();
+}
+function renderAppUpdate() {
+  const out = $("#app-upd-out"); if (!out) return;
+  const r = S.appUpdate;
+  if (!S.info.repo_configured) { out.innerHTML = `<div class="note">${tr("app.not_configured")}</div>`; return; }
+  if (!r) { out.innerHTML = ""; return; }
+  if (r.error) { out.innerHTML = `<div class="note">${r.error === "no releases yet" ? tr("app.no_releases") : tr("app.check_error", { err: esc(r.error) })}</div>`; return; }
+  if (!r.newer) { out.innerHTML = `<div class="note" style="color:var(--good)">✔ ${tr("app.uptodate", { v: r.current })}</div>`; return; }
+  out.innerHTML = `<div style="padding-top:.8rem"><div class="strong" style="color:var(--good)">⬆ ${tr("app.available", { v: r.latest, cur: r.current })}</div>
+    ${r.notes ? `<div class="muted small" style="margin-top:.5rem">${tr("app.notes")}:</div><div class="notes">${esc(r.notes)}</div>` : ""}
+    <div class="btn-row">${r.installable ? `<button id="app-install" class="btn primary">${tr("app.install")}</button>` : `<span class="note">${tr("app.manual_install")}</span>`}
+      ${r.url ? `<button id="app-page" class="btn">${tr("app.open_page")}</button>` : ""}</div>
+    <div id="app-prog" class="note"></div></div>`;
+  const page = $("#app-page"); if (page) page.onclick = () => window.pywebview ? call("open_url", r.url) : window.open(r.url, "_blank");
+  const inst = $("#app-install"); if (inst) inst.onclick = () => installApp(inst);
+}
+async function installApp(btn) {
+  btn.disabled = true;
+  const box = $("#app-prog");
+  const st = await call("start_app_update");
+  if (st.error) { box.textContent = tr("app.check_error", { err: st.error }); btn.disabled = false; return; }
+  const iv = setInterval(async () => {
+    const p = await call("get_app_update_progress");
+    const pct = p.total ? Math.round(100 * p.done / p.total) : 0;
+    box.textContent = p.restart ? tr("app.restarting") : tr("app.installing", { pct });
+    if (p.error) { clearInterval(iv); box.textContent = tr("app.check_error", { err: p.error }); btn.disabled = false; }
+    else if (!p.running && !p.restart) clearInterval(iv);
+  }, 400);
 }
 
 /* ---------- boot ---------- */
@@ -306,8 +455,14 @@ async function boot() {
   $("#btn-full").onclick = () => { if (window.pywebview) call("toggle_fullscreen"); else if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); };
   $("#btn-update").onclick = () => runUpdate();
   $("#ov-btn").onclick = () => runUpdate({ firstRun: true });
-  window.addEventListener("keydown", e => { if (e.key === "F11") { e.preventDefault(); $("#btn-full").click(); } });
+  $("#detail-close").onclick = closeDetail;
+  $("#detail").addEventListener("click", e => { if (e.target.id === "detail") closeDetail(); });
+  window.addEventListener("keydown", e => { if (e.key === "F11") { e.preventDefault(); $("#btn-full").click(); } if (e.key === "Escape") closeDetail(); });
   window.addEventListener("resize", () => S.charts.forEach(c => c.resize()));
+  if (S.settings.check_app_updates && S.info.repo_configured) {     // quiet background check, shows a badge only
+    call("check_app_update").then(r => { S.appUpdate = r; updateBadge(); }).catch(() => {});
+  }
+  if (S.info.seed && S.info.count) setStatus(tr("update.seed", S.info.seed));
   if (!S.info.count) { await runUpdate({ firstRun: true }); }
   else { await renderAll(); if (S.settings.auto_update) runUpdate(); }
 }
