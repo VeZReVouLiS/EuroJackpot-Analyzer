@@ -27,11 +27,11 @@ Write-Host "sha256 $hash"
 if ($NoPublish) { Write-Host "Built (not published): $zip"; exit 0 }
 
 # release notes = the CHANGELOG section of this version
-$log = Get-Content CHANGELOG.md -Raw
+$log = [System.IO.File]::ReadAllText((Resolve-Path CHANGELOG.md), [System.Text.Encoding]::UTF8)   # explicit UTF-8 (PS 5.1 defaults to ANSI -> mojibake)
 $m = [regex]::Match($log, "(?ms)^## \[?$([regex]::Escape($version))\]?.*?\r?\n(.*?)(?=^## |\z)")
 $notes = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "Release $version" }
 $notesFile = New-TemporaryFile
-Set-Content -Path $notesFile -Value $notes -Encoding utf8
+[System.IO.File]::WriteAllText($notesFile.FullName, $notes, (New-Object System.Text.UTF8Encoding($false)))
 
 git push origin HEAD
 if (-not (git tag -l $tag)) { git tag -a $tag -m "Release $tag" }

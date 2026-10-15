@@ -7,12 +7,19 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const ALGO_ORDER = ["auto_ticket", "auto_column", "random", "hot", "cold", "overdue", "weighted", "balanced", "smart"];
 
+// Browser/fallback mode (no native window): the local server hands us a secret token in the URL (?t=...)
+const TOKEN = new URLSearchParams(location.search).get("t") || "";
 async function call(name, ...args) {
   if (window.pywebview && window.pywebview.api) return window.pywebview.api[name](...args);
-  const r = await fetch("/rpc", { method: "POST", body: JSON.stringify({ name, args }) });
+  const r = await fetch("/rpc", { method: "POST", headers: { "X-Token": TOKEN }, body: JSON.stringify({ name, args }) });
   const j = await r.json();
   if (j.error) throw new Error(j.error);
   return j.result;
+}
+function startHeartbeat() {       // lets the server know the window is open; it exits when the window is closed
+  if (!TOKEN) return;
+  const ping = () => fetch("/ping", { headers: { "X-Token": TOKEN } }).catch(() => {});
+  ping(); setInterval(ping, 2500);
 }
 const ready = () => new Promise(res => {
   if (window.pywebview && window.pywebview.api) return res();
@@ -445,6 +452,7 @@ async function installApp(btn) {
 /* ---------- boot ---------- */
 async function boot() {
   await ready();
+  if (!(window.pywebview && window.pywebview.api)) startHeartbeat();
   await refreshInfo();
   applyTheme();
   await loadLocale();
