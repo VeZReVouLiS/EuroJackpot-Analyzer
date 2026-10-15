@@ -150,7 +150,7 @@
   "app.no_releases": "Es wurden noch keine Versionen veröffentlicht.",
   "app.check_error": "Prüfung fehlgeschlagen: {err}",
   "app.auto_check": "Beim Start nach neuer Version suchen",
-  "app.manual_install": "Die automatische Installation ist hier nicht verfügbar – lade die ZIP-Datei von der Release-Seite herunter.",
+  "app.manual_install": "Die automatische Installation ist hier nicht verfügbar – lade das neue Paket von der Release-Seite herunter.",
   "app.notes": "Was ist neu",
   "app.distinction": "App-Updates ändern das Programm selbst. Die Ziehungsergebnisse werden separat über die Schaltfläche „Ziehungen aktualisieren“ aktualisiert.",
   "nav.mytickets": "Meine Scheine",
@@ -210,5 +210,6 @@
   "detail.where": "Wo wurde gewonnen",
   "detail.where_hint": "Die offizielle Quelle nennt den Ort der Gewinner nur für die ersten 3 Gewinnklassen.",
   "detail.region": "Region",
-  "detail.country": "Land"
+  "detail.country": "Land",
+  "web.install_ios": "Zum Installieren: Tippe auf Teilen ⬆ und dann auf „Zum Home-Bildschirm“."
 }

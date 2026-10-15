@@ -8,3 +8,4 @@ build/work/
 .pytest_cache/
 
 *.zip
+site/

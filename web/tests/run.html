@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>core parity checks</title>
+<pre id="out">running…</pre>
+<script type="module">
+  import { runChecks } from "./checks.mjs";
+  const urls = { golden: "golden.json", seed: "../../app/seed/draws.json" };
+  try {
+    const failures = await runChecks(async (n) => (await fetch(urls[n])).json());
+    document.getElementById("out").textContent = failures.length ? "FAILED\n" + failures.join("\n") : "OK";
+  } catch (e) { document.getElementById("out").textContent = "ERROR " + e.stack; }
+</script>

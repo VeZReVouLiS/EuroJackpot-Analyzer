@@ -1,0 +1,99 @@
+name: Android build
+
+# Builds the Android app (APK) from the web app with Capacitor, signs it and attaches it to a GitHub release.
+#  - a release is published -> EuroJackpotApp-android.apk is added to that release
+#  - manual run with a tag   -> the same for an existing release
+#  - push to main            -> build only (artifact)
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to attach the APK to (empty = build only)"
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths: ["web/**", "tools/build_site.py", ".github/workflows/android.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Newest draws and the web app
+        run: |
+          python -m tools.update_web_data --out build-data/draws.json
+          python -m tools.build_site --out site --data build-data/draws.json
+      - name: Android project (Capacitor)
+        run: |
+          mkdir android-app && cd android-app
+          npm init -y >/dev/null
+          npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor/filesystem@7 @capacitor/share@7 @capacitor/browser@7
+          cp ../web/capacitor.config.json .
+          cp -r ../site www
+          npx cap add android
+          npx cap sync android
+          # launcher icon: our PNGs for every density (no adaptive icon, so the PNG is used everywhere)
+          RES=android/app/src/main/res
+          rm -rf $RES/mipmap-anydpi-v26
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do cp ../web/android-res/mipmap-$d/*.png $RES/mipmap-$d/; done
+          # version from app/version.py
+          V=$(python - <<'PY'
+          import re;print(re.search(r'or "([\d.]+)"', open("../app/version.py").read()).group(1))
+          PY
+          )
+          IFS=. read MA MI PA <<EOF
+          $V
+          EOF
+          CODE=$((MA*10000 + MI*100 + PA))
+          sed -i "s/versionCode 1/versionCode $CODE/; s/versionName \"1.0\"/versionName \"$V\"/" android/app/build.gradle
+          echo "version $V code $CODE"
+      - name: Build the APK
+        working-directory: android-app/android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Sign
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KS_B64" ]; then
+            echo "::warning::No signing secrets: using a throw-away key (updates over an installed app will not work)"
+            KS_PASS=temporary-key
+            keytool -genkeypair -keystore release.jks -alias eurojackpot -keyalg RSA -keysize 2048 -validity 3650 -storepass "$KS_PASS" -keypass "$KS_PASS" -dname "CN=temporary"
+          else
+            echo "$KS_B64" | base64 -d > release.jks
+          fi
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          UNSIGNED=$(ls android-app/android/app/build/outputs/apk/release/*.apk | head -1)
+          "$BT/zipalign" -p -f 4 "$UNSIGNED" aligned.apk
+          "$BT/apksigner" sign --ks release.jks --ks-key-alias eurojackpot --ks-pass "pass:$KS_PASS" --key-pass "pass:$KS_PASS" --out EuroJackpotApp-android.apk aligned.apk
+          "$BT/apksigner" verify --print-certs EuroJackpotApp-android.apk | head -3
+          sha256sum EuroJackpotApp-android.apk > EuroJackpotApp-android.apk.sha256
+          ls -la EuroJackpotApp-android.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EuroJackpotApp-android
+          path: |
+            EuroJackpotApp-android.apk
+            EuroJackpotApp-android.apk.sha256
+      - name: Attach to the release
+        if: github.event_name == 'release' || github.event.inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+        run: gh release upload "$TAG" EuroJackpotApp-android.apk EuroJackpotApp-android.apk.sha256 --clobber --repo "${{ github.repository }}"

@@ -253,3 +253,54 @@ td.num { white-space: nowrap; }
 .dtl-head .balls { flex-wrap: nowrap; gap: min(.5rem, 1vw); }
 .dtl-head .ball.lg { width: min(4rem, 11vw); height: min(4rem, 11vw); font-size: min(1.7rem, 4.6vw); }
 .dtl-head .sep { width: min(.5rem, 1vw); }
+
+/* ---------- phones (web app / Android): bottom navigation, one column ---------- */
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+button, .chip, .algo { touch-action: manipulation; }
+.install-tip { position: fixed; left: .8rem; right: .8rem; bottom: calc(5rem + env(safe-area-inset-bottom)); z-index: 70; display: flex; align-items: center; gap: .6rem;
+  padding: .7rem .9rem; border-radius: 1rem; background: var(--bg2); border: 1px solid var(--accent); box-shadow: var(--shadow); font-size: .9rem; font-weight: 600; }
+@media (max-width: 760px) {
+  body { overflow: hidden; }
+  #app { display: block; height: 100dvh; }
+  #sidebar { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 30; flex-direction: row; gap: 0; padding: .3rem .4rem calc(.3rem + env(safe-area-inset-bottom));
+    border-right: 0; border-top: 1px solid var(--card-b); background: var(--bg2); }
+  .brand, .side-foot { display: none; }
+  #nav { flex-direction: row; width: 100%; justify-content: space-around; gap: .1rem; }
+  .nav-btn { flex: 1; flex-direction: column; justify-content: center; gap: .1rem; padding: .35rem .1rem; font-size: .66rem; text-align: center; border-radius: .7rem; }
+  .nav-btn span:not(.ico) { display: block !important; }
+  .nav-btn .ico { font-size: 1.3rem; }
+  .nav-btn .nav-badge { position: absolute; margin: 0; transform: translate(1.2rem, -.2rem); }
+  .nav-btn { position: relative; }
+  #main { height: 100dvh; padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
+  #topbar { flex-wrap: wrap; gap: .3rem .6rem; padding: calc(.5rem + env(safe-area-inset-top)) .8rem .3rem; }
+  .status { order: 2; width: 100%; font-size: .78rem; min-height: 0; }
+  .top-actions { margin-left: auto; gap: .35rem; }
+  #btn-full { display: none; }
+  #btn-update { font-size: .78rem; padding: .45rem .6rem; }
+  .btn.ghost, .dd-btn { padding: .4rem .6rem; }
+  .view { padding: .3rem .8rem 1.5rem; }
+  h1 { font-size: 1.4rem; }
+  .card { padding: 1rem; }
+  .hero { gap: .7rem; } .hero > div:last-child { font-size: .85rem; }
+  .ball { width: 2.2rem; height: 2.2rem; font-size: 1rem; } .ball.lg { width: 2.7rem; height: 2.7rem; font-size: 1.2rem; } .ball.sm { width: 1.7rem; height: 1.7rem; font-size: .8rem; }
+  .balls { gap: .35rem; } .sep { width: .25rem; }
+  .chart-box { height: 15rem; } .chart-box.sm { height: 13rem; }
+  .heat { gap: .25rem; } .cell { padding: .3rem .05rem; border-radius: .5rem; } .cell b { font-size: .95rem; } .cell i { font-size: .65rem; }
+  .algos { grid-template-columns: 1fr; }
+  .col-row { gap: .5rem .7rem; padding: .6rem .7rem; } .col-no { min-width: 0; font-size: .95rem; } .col-price { font-size: .95rem; }
+  .total { padding: .9rem 1rem; } .total .sum { font-size: 1.7rem; }
+  .row { flex-wrap: wrap; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  th, td { padding: .5rem .35rem; } th { font-size: .78rem; }
+  .detail-box { width: 96vw; max-height: 92dvh; padding: 1rem; }
+  .dtl-head { padding-right: 2.4rem; }
+  .where-cls { min-width: 0; width: 100%; }
+  .countdown { gap: .35rem; } .cd-cell { min-width: 4.2rem; padding: .35rem .5rem; } .cd-cell b { font-size: 1.7rem; } .countdown i { font-size: 1.7rem; }
+  .splash { padding: .5rem; } .splash-frame { border-radius: 1.6rem; padding: .9rem .8rem; } .splash-head h1 { font-size: 1.5rem; } .splash-head p { font-size: .9rem; }
+  .flags { gap: .5rem; overflow-y: auto; align-content: flex-start; }
+  .flag-tile { flex: 0 0 calc(33.333% - .34rem); height: 5.4rem; border-radius: 1rem; } .flag-name { font-size: .75rem; padding: .3rem; }
+  .lang-tile { width: 44%; } .lang-tile b { font-size: 1.1rem; }
+  .toast { bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  .dd-menu { max-height: 60dvh; }
+}
+@media (max-width: 760px) { .algos { grid-template-columns: repeat(2, minmax(0, 1fr)); } .algo { padding: .6rem .7rem; font-size: .85rem; } }

@@ -150,7 +150,7 @@
   "app.no_releases": "No releases have been published yet.",
   "app.check_error": "Check failed: {err}",
   "app.auto_check": "Check for a new version on startup",
-  "app.manual_install": "Automatic install is not available here — download the zip from the release page.",
+  "app.manual_install": "Automatic install is not available here — download the new package from the release page.",
   "app.notes": "What's new",
   "app.distinction": "App updates change the program itself. Draw results are updated separately with the “Update draws” button.",
   "nav.mytickets": "My tickets",
@@ -210,5 +210,6 @@
   "detail.where": "Where the winners are",
   "detail.where_hint": "The official source gives the location of the winners for the top 3 classes only.",
   "detail.region": "Region",
-  "detail.country": "Country"
+  "detail.country": "Country",
+  "web.install_ios": "To install it: tap Share ⬆ and then “Add to Home Screen”."
 }

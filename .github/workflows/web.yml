@@ -1,0 +1,60 @@
+name: Web app (GitHub Pages)
+
+# Tests the JavaScript port, then builds the web app with the newest draws and publishes it on GitHub Pages:
+#   https://vezrevoulis.github.io/EuroJackpot-Analyzer/
+# It runs on every change, every morning and shortly after each draw (Tuesday / Friday evening).
+on:
+  push:
+    branches: [main]
+    paths: ["app/**", "web/**", "tools/**", ".github/workflows/web.yml"]
+  schedule:
+    - cron: "15 6 * * *"
+    - cron: "30 19,20,21,22 * * 2,5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Golden file from the Python implementation
+        run: python -m tools.make_golden
+      - name: JavaScript port matches Python
+        run: node --test web/tests/
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Newest draws
+        run: python -m tools.update_web_data --out build-data/draws.json
+      - name: Build the site
+        run: python -m tools.build_site --out site --data build-data/draws.json
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

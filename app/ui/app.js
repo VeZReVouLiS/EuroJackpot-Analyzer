@@ -10,6 +10,7 @@ const ALGO_ORDER = ["auto_ticket", "auto_column", "random", "hot", "cold", "over
 // Browser/fallback mode (no native window): the local server hands us a secret token in the URL (?t=...)
 const TOKEN = new URLSearchParams(location.search).get("t") || "";
 async function call(name, ...args) {
+  if (window.EJ_WEBAPI) return window.EJ_WEBAPI[name](...args);       // web app (PWA) and Android app: the API runs in the page
   if (window.pywebview && window.pywebview.api) return window.pywebview.api[name](...args);
   const r = await fetch("/rpc", { method: "POST", headers: { "X-Token": TOKEN }, body: JSON.stringify({ name, args }) });
   const j = await r.json();
@@ -22,6 +23,11 @@ function startHeartbeat() {       // lets the server know the window is open; it
   ping(); setInterval(ping, 2500);
 }
 const ready = () => new Promise(res => {
+  if (window.EJ_WEB) {                         // wait until the in-browser API (web/boot.js) is up
+    const t0 = Date.now();
+    const poll = () => (window.EJ_WEBAPI_PROMISE ? window.EJ_WEBAPI_PROMISE.then(() => res(), () => res()) : (Date.now() - t0 > 8000 ? res() : setTimeout(poll, 25)));
+    return poll();
+  }
   if (window.pywebview && window.pywebview.api) return res();
   let done = false;
   const fin = () => { if (!done) { done = true; res(); } };
@@ -601,7 +607,11 @@ function renderSettings() {
 }
 async function exportData(fmt) {
   try {
-    if (window.pywebview && window.pywebview.api) {
+    if (window.EJ_WEBAPI) {                    // web app / Android: share sheet ("Save to Files") or a download
+      const r = await call("export_text", fmt);
+      await window.EJ_WEBAPI.save_text(r.filename, r.text);
+      toast(tr("settings.export.done", r));
+    } else if (window.pywebview && window.pywebview.api) {
       const r = await call("export_file", fmt);
       if (r) toast(tr("settings.export.done", r));
     } else {                         // browser / dev mode: normal download
@@ -638,7 +648,7 @@ function renderAppUpdate() {
     <div class="btn-row">${r.installable ? `<button id="app-install" class="btn primary">${tr("app.install")}</button>` : `<span class="note">${tr("app.manual_install")}</span>`}
       ${r.url ? `<button id="app-page" class="btn">${tr("app.open_page")}</button>` : ""}</div>
     <div id="app-prog" class="note"></div></div>`;
-  const page = $("#app-page"); if (page) page.onclick = () => window.pywebview ? call("open_url", r.url) : window.open(r.url, "_blank");
+  const page = $("#app-page"); if (page) page.onclick = () => (window.pywebview || window.EJ_WEBAPI) ? call("open_url", r.url) : window.open(r.url, "_blank");
   const inst = $("#app-install"); if (inst) inst.onclick = () => installApp(inst);
 }
 async function installApp(btn) {
@@ -653,6 +663,18 @@ async function installApp(btn) {
     if (p.error) { clearInterval(iv); box.textContent = tr("app.check_error", { err: p.error }); btn.disabled = false; }
     else if (!p.running && !p.restart) clearInterval(iv);
   }, 400);
+}
+
+/* ---------- iPhone: how to install the web app ---------- */
+function installTip() {
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const standalone = window.navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+  let dismissed = false; try { dismissed = localStorage.getItem("ej_install_tip") === "1"; } catch (e) { /* private mode */ }
+  if (!window.EJ_WEB || window.Capacitor || !ios || standalone || dismissed || !S.t["web.install_ios"]) return;
+  const el = document.createElement("div"); el.className = "install-tip";
+  el.innerHTML = `<span>${esc(tr("web.install_ios"))}</span><button class="btn ghost" aria-label="close">✕</button>`;
+  $("button", el).onclick = () => { try { localStorage.setItem("ej_install_tip", "1"); } catch (e) { /* ignore */ } el.remove(); };
+  document.body.appendChild(el);
 }
 
 /* ---------- boot ---------- */
@@ -673,6 +695,8 @@ async function boot() {
   $("#btn-theme").onclick = async () => { await setSetting("theme", S.settings.theme === "dark" ? "light" : "dark"); applyTheme(); renderAll(); };
   document.addEventListener("click", closeDropdowns);
   $("#btn-full").onclick = () => { if (window.pywebview) call("toggle_fullscreen"); else if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); };
+  if (window.EJ_WEB && !document.fullscreenEnabled) $("#btn-full").classList.add("hidden");
+  installTip();
   $("#btn-update").onclick = () => runUpdate();
   $("#ov-btn").onclick = () => runUpdate({ firstRun: true });
   $("#detail-close").onclick = closeDetail;
