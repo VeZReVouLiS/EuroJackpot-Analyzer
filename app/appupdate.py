@@ -21,7 +21,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-from . import version
+from . import tls, version
 from .paths import app_bundle, base_dir, is_mac_app
 
 API = "https://api.github.com/repos/{repo}/releases/latest"
@@ -45,7 +45,7 @@ def is_newer(latest: str, current: str) -> bool:
 
 def _open(url: str, timeout: int = 30):
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/vnd.github+json"})
-    return urllib.request.urlopen(req, timeout=timeout)
+    return urllib.request.urlopen(req, timeout=timeout, context=tls.context())
 
 
 def pick_assets(release: dict, repo: str) -> tuple[str | None, str | None]:

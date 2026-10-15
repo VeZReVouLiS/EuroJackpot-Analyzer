@@ -88,6 +88,20 @@ def selftest() -> int:
         assert state["count"] > 0 and api.get_locale("de")["nav.history"], "bundled data/locales missing"
         assert api.get_countries()["countries"], "countries.json missing"
         db.close()
+    import ssl
+    import urllib.error
+    import urllib.request
+
+    from . import tls
+
+    try:                        # the bundled Python must trust the usual root certificates (macOS had none)
+        urllib.request.urlopen("https://api.github.com", timeout=20, context=tls.context()).close()
+    except urllib.error.URLError as e:
+        if isinstance(getattr(e, "reason", None), ssl.SSLCertVerificationError):
+            print(f"selftest FAILED: TLS certificates are not trusted: {e}")
+            return 1
+    except OSError:
+        pass                    # offline runner: not a certificate problem
     try:
         from importlib.metadata import version as dist_version
 

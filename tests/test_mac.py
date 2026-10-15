@@ -41,3 +41,13 @@ def test_apply_script_is_valid_sh():
         return
     r = subprocess.run([sh, "-n", "-c", appupdate.APPLY_SH], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+def test_tls_context_includes_the_certifi_bundle():
+    import ssl
+
+    from app import tls
+
+    ctx = tls.context()
+    assert isinstance(ctx, ssl.SSLContext) and ctx.verify_mode == ssl.CERT_REQUIRED
+    assert ctx.cert_store_stats()["x509_ca"] > 50          # roots are loaded (certifi on a bare macOS Python)

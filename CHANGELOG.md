@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.3
+- Bug fixes / μικρές διορθώσεις
+
 ## 1.3.2
 - Έκδοση για Mac (macOS 11+, Apple Silicon και Intel): zip στη σελίδα Releases, με αυτόματο έλεγχο και εγκατάσταση νέας έκδοσης. Τα δεδομένα σώζονται στο ~/Library/Application Support/EuroJackpot Analyzer.
 - Bug fixes / μικρές διορθώσεις

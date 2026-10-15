@@ -6,6 +6,8 @@ import time
 import urllib.error
 import urllib.request
 
+from .. import tls
+
 # Some sites (Akamai bot protection) reject unknown clients -> look like a normal browser.
 BROWSER_UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -34,7 +36,7 @@ def get_json(url: str, referer: str, retries: int = 3, timeout: int = 25):
     last = ""
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
+            with urllib.request.urlopen(req, timeout=timeout, context=tls.context()) as r:
                 body = r.read().decode("utf-8")
                 return json.loads(body) if body.strip() else None
         except urllib.error.HTTPError as e:
