@@ -8,7 +8,7 @@ PY=${PYTHON:-python3}
 NAME="EuroJackpot Analyzer"
 VERSION=$(.venv/bin/python -c "from app.version import __version__ as v; print(v)")
 .venv/bin/python -m PyInstaller --noconfirm --clean --windowed --name "$NAME" \
-    --icon build/icon.icns --osx-bundle-identifier io.github.vezrevoulis.eurojackpot-analyzer \
+    --icon "$PWD/build/icon.icns" --osx-bundle-identifier io.github.vezrevoulis.eurojackpot-analyzer \
     --distpath dist --workpath build/work --specpath build/work \
     --add-data "$PWD/app/ui:app/ui" --add-data "$PWD/app/locales:app/locales" --add-data "$PWD/app/seed:app/seed" \
     --collect-submodules webview --paths "$PWD" run.py
