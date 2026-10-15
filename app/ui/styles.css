@@ -241,4 +241,11 @@ select option { color: #0f172a; }
 .price-edit input { width: 6.5rem; font: inherit; font-weight: 700; color: var(--text); background: var(--card); border: 1px solid var(--card-b); border-radius: .7rem; padding: .45rem .7rem; text-align: right; }
 .card:has(.dd-menu.open) { position: relative; z-index: 30; }
 #detail-body { width: 100%; text-align: left; }
-td.num, th.num { white-space: nowrap; }
+td.num { white-space: nowrap; }
+
+/* no visible scrollbars anywhere (scrolling by wheel / touch / keys still works) */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+.detail-box { overflow-x: hidden; }
+.detail-box th, .detail-box td { padding: .55rem .45rem; }
+.detail-box th { vertical-align: bottom; line-height: 1.2; }
