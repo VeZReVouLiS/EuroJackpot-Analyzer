@@ -117,10 +117,13 @@ def safe_extract(zip_path: Path, dest: Path) -> Path:
 
 
 APPLY_PS1 = r"""param([int]$ProcId, [string]$Src, [string]$Dst, [string]$Exe)
+Start-Transcript -Path (Join-Path $PSScriptRoot 'apply.log') | Out-Null
 try { Wait-Process -Id $ProcId -Timeout 90 -ErrorAction SilentlyContinue } catch {}
 Start-Sleep -Seconds 1
 robocopy $Src $Dst /E /XD "$Dst\data" /R:10 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+"robocopy exit code: $LASTEXITCODE"
 Start-Process -FilePath $Exe
+Stop-Transcript | Out-Null
 """
 
 
@@ -154,9 +157,11 @@ def install(release: dict, progress=None) -> None:
     ps1 = tmp / "apply.ps1"
     ps1.write_text(APPLY_PS1, encoding="utf-8")
     exe = Path(sys.executable).resolve()
-    flags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0)
-    subprocess.Popen(
-        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", str(ps1),
-         "-ProcId", str(os.getpid()), "-Src", str(src), "-Dst", str(base_dir()), "-Exe", str(exe)],
-        creationflags=flags, close_fds=True,
-    )
+    cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", str(ps1),
+           "-ProcId", str(os.getpid()), "-Src", str(src), "-Dst", str(base_dir()), "-Exe", str(exe)]
+    base = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    breakaway = 0x01000000          # CREATE_BREAKAWAY_FROM_JOB: survive if our job object is closed with us
+    try:
+        subprocess.Popen(cmd, creationflags=base | breakaway, close_fds=True)
+    except OSError:                 # the job does not allow breakaway
+        subprocess.Popen(cmd, creationflags=base, close_fds=True)

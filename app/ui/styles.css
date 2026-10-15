@@ -21,6 +21,7 @@ body {
 }
 button { font: inherit; color: inherit; cursor: pointer; }
 .hidden { display: none !important; }
+.no-anim *, .no-anim *::before, .no-anim *::after { animation: none !important; transition: none !important; }
 .muted { color: var(--muted); } .small { font-size: .8rem; } .strong { font-weight: 700; } .big { font-size: 1.6rem; }
 
 #app { display: grid; grid-template-columns: 15rem 1fr; height: 100vh; }
