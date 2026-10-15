@@ -6,8 +6,9 @@ import threading
 import time
 import traceback
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
-from . import appupdate, exporter, generators, rules, stats, updater, version
+from . import appupdate, evaluation, exporter, generators, rules, stats, updater, version
 from .db import Database
 from .paths import resource_dir
 from .sources import allwyn, importer, official
@@ -38,6 +39,7 @@ class Api:
         self._lock = threading.Lock()
         self._settings_lock = threading.Lock()
         self._seed_info = self._load_seed()
+        self.evaluate_tickets()
 
     def _bind(self, window) -> None:
         self._window = window
@@ -97,6 +99,7 @@ class Api:
             "euro_max": rules.current_euro_max(),
             "version": version.__version__,
             "repo_configured": bool(version.GITHUB_REPO),
+            "unseen_wins": self.get_tickets()["unseen_wins"],
         }
 
     # draw-data updating -----------------------------------------------
@@ -119,6 +122,7 @@ class Api:
                 res["verified"] = updater.verify_with_allwyn(self._db).get("ok")
             except Exception:
                 res["verified"] = None
+            res["tickets"] = self.evaluate_tickets()      # cross-check saved tickets with the new draws
             self._progress["result"] = res
         except UpdateError as e:       # both sources failed: tell the UI which and why
             self._progress["error"] = str(e)
@@ -188,12 +192,91 @@ class Api:
         return d
 
     # tickets ----------------------------------------------------------
-    def generate(self, columns: int, algo: str, keep: list | None = None, period: str = "all") -> dict:
+    def generate(self, columns: int, algo: str, keep: list | None = None, period: str = "all",
+                 ticket_id: int | None = None, target_date: str | None = None) -> dict:
+        """Generate a ticket and store it in the history for the next draw.
+
+        While the ticket is still unplayed and unevaluated, generating again with its ``ticket_id`` replaces it
+        (so experimenting does not fill the history); a played ticket is never overwritten."""
         s = self.get_stats(period)
         if not s["n_draws"]:
             raise ValueError("no data")
         keep = [k if k else None for k in (keep or [])]
-        return generators.generate_ticket(s, int(columns), algo, keep=keep)
+        t = generators.generate_ticket(s, int(columns), algo, keep=keep)
+        existing = self._db.get_ticket(int(ticket_id)) if ticket_id else None
+        if existing and not existing["played"] and not existing["result"]:
+            target = target_date or existing["target_date"]
+            self._db.update_ticket(existing["id"], columns=t["columns"], algo=algo, price=t["total"],
+                                   target_date=target)
+            tid, played = existing["id"], False
+        else:
+            target = target_date or rules.next_draw_dates(datetime.now(), 1)[0].isoformat()
+            tid = self._db.add_ticket(datetime.now().isoformat(timespec="seconds"), target, algo, t["columns"],
+                                      t["total"])
+            played = False
+        return {**t, "id": tid, "target_date": target, "played": played}
+
+    def get_next_draws(self, n: int = 4) -> list:
+        return [d.isoformat() for d in rules.next_draw_dates(datetime.now(), int(n))]
+
+    def set_ticket_played(self, ticket_id: int, played: bool) -> dict | None:
+        self._db.update_ticket(int(ticket_id), played=1 if played else 0)
+        return self._db.get_ticket(int(ticket_id))
+
+    def set_ticket_target(self, ticket_id: int, target_date: str) -> dict | None:
+        t = self._db.get_ticket(int(ticket_id))
+        if t and not t["result"]:
+            date.fromisoformat(target_date)          # validates
+            self._db.update_ticket(t["id"], target_date=target_date)
+        return self._db.get_ticket(int(ticket_id))
+
+    def delete_ticket(self, ticket_id: int) -> bool:
+        self._db.delete_ticket(int(ticket_id))
+        return True
+
+    def evaluate_tickets(self) -> dict:
+        """Cross-check every ticket whose draw is now in the database. Returns newly evaluated wins."""
+        wins, evaluated = [], 0
+        for t in self._db.all_tickets():
+            res = t["result"]
+            if res and res.get("complete"):
+                continue
+            draw = self._db.get_draw(t["target_date"])
+            if not draw:
+                continue
+            if res and not draw.get("details"):      # still no prize table: nothing new to learn
+                continue
+            new = evaluation.evaluate_ticket(t["columns"], draw)
+            self._db.update_ticket(t["id"], result=new, seen=0 if (new["winning_columns"] and not res) else int(t["seen"]))
+            if not res:
+                evaluated += 1
+                if new["winning_columns"] and t["played"]:
+                    wins.append({"id": t["id"], "target_date": t["target_date"], "total_prize": new["total_prize"]})
+        return {"evaluated": evaluated, "wins": wins}
+
+    def get_tickets(self) -> dict:
+        tickets = self._db.all_tickets()
+        played = [t for t in tickets if t["played"]]
+        done = [t for t in played if t["result"]]
+        spent = round(sum(t["price"] for t in played), 2)
+        won = round(sum(t["result"]["total_prize"] for t in done), 2)
+        return {
+            "tickets": tickets,
+            "totals": {
+                "tickets": len(tickets), "played": len(played), "evaluated": len(done),
+                "pending": len([t for t in played if not t["result"]]),
+                "spent": spent, "won": won, "net": round(won - sum(t["price"] for t in done), 2),
+                "best": max([t["result"]["total_prize"] for t in done], default=0.0),
+            },
+            "unseen_wins": sum(1 for t in tickets if t["played"] and t["result"] and t["result"]["winning_columns"]
+                               and not t["seen"]),
+        }
+
+    def mark_tickets_seen(self) -> bool:
+        for t in self._db.all_tickets():
+            if t["result"] and not t["seen"]:
+                self._db.update_ticket(t["id"], seen=1)
+        return True
 
     # import / export --------------------------------------------------
     def _import_draws(self, draws: list[dict]) -> dict:
@@ -201,11 +284,16 @@ class Api:
         if draws:
             self._db.upsert_draws(draws)
             self._db.set_meta("last_import", datetime.now().isoformat(timespec="seconds"))
+        self.evaluate_tickets()
         return {"found": len(draws), "added": self._db.count() - before, "total": self._db.count(),
                 "last_draw": self._db.last_date()}
 
     def import_text(self, filename: str, text: str) -> dict:
-        return self._import_draws(importer.parse_text(text, filename))
+        res = self._import_draws(importer.parse_text(text, filename))
+        res["tickets"] = self._db.import_tickets(importer.parse_tickets(text))
+        if res["tickets"]:
+            self.evaluate_tickets()
+        return res
 
     def import_file(self) -> dict | None:
         import webview
@@ -217,12 +305,14 @@ class Api:
         )
         if not res:
             return None
-        return self._import_draws(importer.parse_file(res[0]))
+        with open(res[0], "rb") as f:
+            raw = f.read()
+        return self.import_text(Path(res[0]).name, raw.decode("utf-8-sig", "replace"))
 
     def export_text(self, fmt: str = "json") -> dict:
         """Export content as text (used by the browser/dev mode, which downloads it itself)."""
         draws = self._db.all_draws(with_details=True)
-        text = exporter.to_csv(draws) if fmt == "csv" else exporter.to_json(draws)
+        text = exporter.to_csv(draws) if fmt == "csv" else exporter.to_json(draws, self._db.all_tickets())
         return {"filename": exporter.default_filename("csv" if fmt == "csv" else "json"), "text": text,
                 "count": len(draws)}
 

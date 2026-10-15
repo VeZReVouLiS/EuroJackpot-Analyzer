@@ -17,6 +17,17 @@ CREATE TABLE IF NOT EXISTS draws(
     details TEXT
 );
 CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS tickets(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at TEXT,
+    target_date TEXT,
+    algo TEXT,
+    columns TEXT,
+    price REAL,
+    played INTEGER DEFAULT 0,
+    result TEXT,
+    seen INTEGER DEFAULT 0
+);
 """
 
 
@@ -102,6 +113,64 @@ class Database:
     def delete_after(self, date_str: str) -> None:
         with self._tx() as c:
             c.execute("DELETE FROM draws WHERE draw_date > ?", (date_str,))
+
+    # tickets ----------------------------------------------------------
+    @staticmethod
+    def _ticket(r) -> dict:
+        return {
+            "id": r["id"], "created_at": r["created_at"], "target_date": r["target_date"], "algo": r["algo"],
+            "columns": json.loads(r["columns"]), "price": r["price"], "played": bool(r["played"]),
+            "result": json.loads(r["result"]) if r["result"] else None, "seen": bool(r["seen"]),
+        }
+
+    def add_ticket(self, created_at: str, target_date: str, algo: str, columns: list[dict], price: float) -> int:
+        with self._tx() as c:
+            cur = c.execute(
+                "INSERT INTO tickets(created_at,target_date,algo,columns,price) VALUES(?,?,?,?,?)",
+                (created_at, target_date, algo, json.dumps(columns), price),
+            )
+            return cur.lastrowid
+
+    def update_ticket(self, tid: int, **fields) -> None:
+        allowed = {"target_date", "algo", "columns", "price", "played", "result", "seen", "created_at"}
+        sets, vals = [], []
+        for k, v in fields.items():
+            if k not in allowed:
+                raise ValueError(k)
+            sets.append(f"{k}=?")
+            vals.append(json.dumps(v) if k in ("columns", "result") and v is not None else v)
+        with self._tx() as c:
+            c.execute(f"UPDATE tickets SET {', '.join(sets)} WHERE id=?", (*vals, tid))
+
+    def get_ticket(self, tid: int) -> dict | None:
+        with self._lock:
+            r = self._conn.execute("SELECT * FROM tickets WHERE id=?", (tid,)).fetchone()
+            return self._ticket(r) if r else None
+
+    def all_tickets(self) -> list[dict]:
+        with self._lock:
+            rows = self._conn.execute("SELECT * FROM tickets ORDER BY target_date DESC, id DESC").fetchall()
+            return [self._ticket(r) for r in rows]
+
+    def import_tickets(self, tickets: list[dict]) -> int:
+        """Merge tickets from an export; a ticket already present (same creation time + draw) is skipped."""
+        have = {(t["created_at"], t["target_date"]) for t in self.all_tickets()}
+        added = 0
+        with self._tx() as c:
+            for t in tickets:
+                if (t["created_at"], t["target_date"]) in have:
+                    continue
+                c.execute(
+                    "INSERT INTO tickets(created_at,target_date,algo,columns,price,played,result) VALUES(?,?,?,?,?,?,?)",
+                    (t["created_at"], t["target_date"], t["algo"], json.dumps(t["columns"]), t["price"],
+                     1 if t["played"] else 0, json.dumps(t["result"]) if t.get("result") else None),
+                )
+                added += 1
+        return added
+
+    def delete_ticket(self, tid: int) -> None:
+        with self._tx() as c:
+            c.execute("DELETE FROM tickets WHERE id=?", (tid,))
 
     # meta / settings -------------------------------------------------
     def get_meta(self, key: str, default: str | None = None) -> str | None:

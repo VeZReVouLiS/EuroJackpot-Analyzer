@@ -146,6 +146,29 @@ def parse_text(text: str, filename: str = "") -> list[dict]:
     return sorted(out.values(), key=lambda x: x["date"])
 
 
+def parse_tickets(text: str) -> list[dict]:
+    """Ticket history stored in an export made by this app (JSON with a "tickets" list). Else []."""
+    text = text.lstrip("﻿").strip()
+    if not text.startswith("{"):
+        return []
+    try:
+        doc = json.loads(text)
+    except ValueError:
+        return []
+    out = []
+    for t in doc.get("tickets", []) if isinstance(doc, dict) else []:
+        try:
+            cols = [{"main": sorted(int(n) for n in c["main"]), "euro": sorted(int(n) for n in c["euro"]),
+                     "algo": c.get("algo", "random")} for c in t["columns"]]
+            if cols and all(_valid(c["main"], c["euro"]) for c in cols):
+                out.append({"created_at": str(t["created_at"]), "target_date": str(t["target_date"]),
+                            "algo": str(t.get("algo", "")), "columns": cols, "price": float(t.get("price", 0)),
+                            "played": bool(t.get("played")), "result": t.get("result")})
+        except (KeyError, TypeError, ValueError):
+            continue
+    return out
+
+
 def parse_file(path: str) -> list[dict]:
     with open(path, "rb") as f:
         raw = f.read()

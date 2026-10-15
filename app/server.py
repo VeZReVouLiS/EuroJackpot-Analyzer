@@ -71,10 +71,11 @@ class AppServer:
                 super().do_GET()
 
             def do_POST(self):
+                raw = self.rfile.read(int(self.headers.get("Content-Length", 0)))   # always drain the body first
                 if self.path != "/rpc" or not self._allowed():
                     return self._reply(403, {"error": "forbidden"})
                 try:
-                    body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))) or b"{}")
+                    body = json.loads(raw or b"{}")
                     name = body.get("name", "")
                     if name.startswith("_") or not hasattr(srv.api, name):
                         raise AttributeError(name)

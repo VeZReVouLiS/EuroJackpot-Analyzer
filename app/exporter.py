@@ -11,8 +11,8 @@ from . import version
 FORMAT = "eurojackpot-analyzer"
 
 
-def to_json(draws: list[dict]) -> str:
-    """Full-fidelity export (includes prize details). Re-importable by importer.parse_text."""
+def to_json(draws: list[dict], tickets: list[dict] | None = None) -> str:
+    """Full-fidelity export (includes prize details and the ticket history). Re-importable."""
     doc = {
         "format": FORMAT,
         "version": 1,
@@ -21,6 +21,9 @@ def to_json(draws: list[dict]) -> str:
         "count": len(draws),
         "draws": draws,
     }
+    if tickets:
+        doc["tickets"] = [{k: t[k] for k in ("created_at", "target_date", "algo", "columns", "price", "played", "result")}
+                          for t in tickets]
     return json.dumps(doc, ensure_ascii=False, indent=1)
 
 

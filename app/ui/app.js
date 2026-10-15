@@ -65,6 +65,7 @@ async function refreshInfo() {
   $("#last-update").textContent = fmtDT(S.info.last_update);
   $("#draw-count").textContent = `${S.info.count} ${tr("top.draws")}`;
   $("#app-version").textContent = "v" + S.info.version;
+  const nb = $("#nav-badge"); nb.textContent = S.info.unseen_wins || ""; nb.classList.toggle("hidden", !S.info.unseen_wins);
   updateBadge();
 }
 function updateBadge() {
@@ -106,6 +107,11 @@ async function runUpdate({ firstRun = false } = {}) {
     }
     S.lastError = null;
     const r = p.result || {};
+    const wins = (r.tickets && r.tickets.wins) || [];
+    if (wins.length) {          // a played ticket won in a draw that was just downloaded
+      const total = wins.reduce((a, w) => a + w.total_prize, 0);
+      toast(tr("mt.win_toast", { amount: money(total), date: fmtDate(wins[0].target_date) }));
+    }
     setStatus((r.added ? tr("update.done", r) : tr("update.uptodate", r)) + (r.verified ? "  " + tr("update.verified") : ""), "ok");
     await refreshInfo(); await renderAll();
   });
@@ -116,7 +122,8 @@ function showView(v) {
   S.view = v;
   $$(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === v));
   $$(".view").forEach(s => s.classList.toggle("active", s.id === "view-" + v));
-  if (v === "stats") renderStats(); else if (v === "ticket") renderTicket(); else if (v === "history") renderHistory(); else renderSettings();
+  if (v === "stats") renderStats(); else if (v === "ticket") renderTicket(); else if (v === "mytickets") renderMyTickets();
+  else if (v === "history") renderHistory(); else renderSettings();
 }
 async function renderAll() { showView(S.view); }
 
@@ -305,11 +312,15 @@ async function renderTicket() {
 }
 async function generate(keep) {
   try {
-    S.ticket = await call("generate", S.settings.columns, S.settings.algo, keep || [], S.settings.period || "all");
+    const cur = S.ticket && !S.ticket.played ? S.ticket : null;       // an unplayed ticket is replaced, not duplicated
+    S.ticket = await call("generate", S.settings.columns, S.settings.algo, keep || [], S.settings.period || "all",
+      cur ? cur.id : null, cur ? cur.target_date : null);
     if (!keep) S.locks = {};
+    S.nextDraws = await call("get_next_draws", 4);
     drawTicket();
   } catch (e) { toast(e.message || String(e)); }
 }
+const fmtDay = iso => { const d = new Date(iso + "T12:00:00"); return d.toLocaleDateString(S.settings.lang === "el" ? "el-GR" : "en-GB", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }); };
 function drawTicket() {
   const out = $("#ticket-out"); if (!out) return;
   const tk = S.ticket;
@@ -323,7 +334,14 @@ function drawTicket() {
       <span class="col-price">${money(tk.price_per_column)}</span></div>`).join("")}</div>
     <div class="total"><div><div class="muted">${tr("ticket.total")}</div><div>${tk.columns.length} × ${money(tk.price_per_column)}</div></div>
       <div class="sum">${money(tk.total)}</div>
-      <button id="copy" class="btn">📋 ${tr("ticket.copy")}</button></div>`;
+      <button id="copy" class="btn">📋 ${tr("ticket.copy")}</button></div>
+    <div class="saved card">
+      <div><b>💾 ${tr("tk.saved")}</b> · ${tr("tk.for_draw")}:
+        <select id="tk-target">${[...new Set([tk.target_date, ...(S.nextDraws || [])])].sort().map(d => `<option value="${d}" ${d === tk.target_date ? "selected" : ""}>${fmtDay(d)}</option>`).join("")}</select></div>
+      <button id="tk-played" class="btn ${tk.played ? "primary" : ""}">${tk.played ? "✅ " + tr("tk.played_on") : "☐ " + tr("tk.played")}</button>
+      <div class="muted small" style="flex-basis:100%">${tr("tk.played.hint")}</div></div>`;
+  $("#tk-target").onchange = async e => { const t = await call("set_ticket_target", tk.id, e.target.value); S.ticket = { ...S.ticket, target_date: t.target_date }; };
+  $("#tk-played").onclick = async () => { const t = await call("set_ticket_played", tk.id, !tk.played); S.ticket = { ...S.ticket, played: t.played }; drawTicket(); };
   $$("[data-lock]", out).forEach(b => b.onclick = () => { const i = +b.dataset.lock; S.locks[i] = !S.locks[i]; drawTicket(); });
   $$("[data-regen]", out).forEach(b => b.onclick = () => { const i = +b.dataset.regen;
     generate(tk.columns.map((c, j) => j === i ? null : c)); });
@@ -331,6 +349,56 @@ function drawTicket() {
     const text = tk.columns.map((c, i) => `${tr("ticket.column")} ${i + 1}: ${c.main.join(" ")} + ${c.euro.join(" ")}`).join("\n") + `\n${tr("ticket.total")}: ${money(tk.total)}`;
     try { await navigator.clipboard.writeText(text); toast(tr("ticket.copied")); } catch { toast(text); }
   };
+}
+
+/* ---------- my tickets: history + cross-check with the draws ---------- */
+const TK_FILTERS = [["all", "mt.filter.all"], ["played", "mt.filter.played"], ["pending", "mt.filter.pending"], ["winners", "mt.filter.winners"]];
+function ticketBalls(c, res, draw) {
+  const hitM = new Set(res ? res.main_hit : []), hitE = new Set(res ? res.euro_hit : []);
+  const cls = (hit) => res ? (hit ? "hit" : "miss") : "";
+  return `<div class="balls">${c.main.map(n => ball(n, "sm " + cls(hitM.has(n)))).join("")}<span class="sep"></span>${c.euro.map(n => ball(n, "euro sm " + cls(hitE.has(n)))).join("")}</div>`;
+}
+async function renderMyTickets() {
+  killCharts();
+  const view = $("#view-mytickets");
+  const data = await call("get_tickets");
+  const f = S.tkFilter || "all";
+  const list = data.tickets.filter(t => f === "all" || (f === "played" && t.played) || (f === "pending" && !t.result)
+    || (f === "winners" && t.result && t.result.winning_columns));
+  const T = data.totals;
+  const kpi = (l, v, cls = "") => `<div class="kpi"><span class="muted small">${l}</span><b class="${cls}">${v}</b></div>`;
+  view.innerHTML = `<h1>${tr("mt.title")}</h1>
+    <div class="kpis">${kpi(tr("mt.spent"), money(T.spent))}${kpi(tr("mt.won"), money(T.won), T.won ? "pos" : "")}
+      ${kpi(tr("mt.net"), (T.net > 0 ? "+" : "") + money(T.net), T.net > 0 ? "pos" : T.net < 0 ? "neg" : "")}${kpi(tr("mt.best"), money(T.best))}
+      ${kpi(tr("mt.tickets"), tr("mt.count", T))}</div>
+    <div class="toolbar"><div class="chips">${TK_FILTERS.map(([k, l]) => `<button class="chip ${k === f ? "active" : ""}" data-f="${k}">${tr(l)}</button>`).join("")}</div></div>
+    ${list.length ? list.map(t => ticketCard(t)).join("") : `<div class="card empty">${tr("mt.empty")}</div>`}`;
+  $$("[data-f]", view).forEach(b => b.onclick = () => { S.tkFilter = b.dataset.f; renderMyTickets(); });
+  $$("[data-played]", view).forEach(b => b.onclick = async () => { await call("set_ticket_played", +b.dataset.played, b.dataset.val !== "1"); renderMyTickets(); });
+  $$("[data-del]", view).forEach(b => b.onclick = async () => { if (confirm(tr("mt.delete_confirm"))) { await call("delete_ticket", +b.dataset.del); if (S.ticket && S.ticket.id === +b.dataset.del) S.ticket = null; renderMyTickets(); } });
+  $$("[data-draw]", view).forEach(b => b.onclick = () => openDraw(b.dataset.draw));
+  if (data.unseen_wins) { await call("mark_tickets_seen"); await refreshInfo(); }
+}
+function ticketCard(t) {
+  const r = t.result;
+  const status = !r ? `<span class="status-chip">⏳ ${tr("mt.pending")}</span>`
+    : r.winning_columns ? `<span class="status-chip win">🎉 ${r.complete ? tr("mt.win", { amount: money(r.total_prize) }) : tr("mt.win_unknown")}</span>`
+    : `<span class="status-chip">${tr("mt.nowin")}</span>`;
+  const cols = t.columns.map((c, i) => {
+    const rc = r ? r.columns[i] : null;
+    const prize = !rc ? "" : rc.wins ? `<span class="prize win">${rc.known ? money(rc.prize) : "?"}</span>` : `<span class="prize">—</span>`;
+    return `<div class="col-row ${rc && rc.wins ? "winner" : ""}"><span class="col-no">${tr("ticket.column")} ${i + 1}</span>${ticketBalls(c, rc)}
+      ${rc ? `<span class="col-tag">${rc.tier.replace("+", " + ")}</span>` : `<span class="col-tag">${tr("algo.short." + c.algo)}</span>`}<span class="col-price">${prize}</span></div>`;
+  }).join("");
+  return `<div class="card tk ${r && r.winning_columns && t.played ? "tk-win" : ""}">
+    <div class="tk-head"><div><b ${r ? `class="linkish" data-draw="${t.target_date}"` : ""}>${fmtDay(t.target_date)}</b> ${status}
+      ${t.played ? "" : `<span class="status-chip dim">${tr("mt.suggestion")}</span>`}
+      <div class="muted small">${tr("mt.created")} ${fmtDT(t.created_at)} · ${algoLabel(t.algo)} · ${tr("mt.cost")} ${money(t.price)}</div></div>
+      <div class="tk-actions"><button class="btn ghost" data-played="${t.id}" data-val="${t.played ? 1 : 0}">${t.played ? "✅ " + tr("tk.played") : "☐ " + tr("tk.played")}</button>
+        <button class="btn ghost" data-del="${t.id}" title="${tr("mt.delete")}">🗑</button></div></div>
+    ${r ? `<div class="muted small" style="margin:.5rem 0 .3rem">${tr("mt.winning_numbers")} ${fmtDate(r.draw_date)}:</div>${balls(r.draw, "sm")}` : ""}
+    ${r && !r.complete ? `<div class="note">${tr("mt.update_hint")}</div>` : ""}
+    <div class="cols" style="margin-top:.6rem">${cols}</div></div>`;
 }
 
 /* ---------- history ---------- */
@@ -475,6 +543,9 @@ async function boot() {
   if (hp.get("lang") && hp.get("lang") !== S.settings.lang) { await setSetting("lang", hp.get("lang")); await loadLocale(); await refreshInfo(); }
   if (hp.get("theme") && hp.get("theme") !== S.settings.theme) { await setSetting("theme", hp.get("theme")); applyTheme(); }
   if (hp.get("static")) document.body.classList.add("no-anim");   // screenshots: no fade-in captured half-way
+  if (hp.get("demo_update")) {          // docs: show the update screen; real release data, install button forced on
+    S.appUpdate = await call("check_app_update"); S.appUpdate.installable = true; updateBadge();
+  }
   if (hp.get("view")) S.view = hp.get("view");
   if (!S.info.count) { await runUpdate({ firstRun: true }); }
   else {
