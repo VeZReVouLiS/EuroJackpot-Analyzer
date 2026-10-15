@@ -1,8 +1,8 @@
-# Keeps the Home Assistant integration repo (EuroJackpot-HA) in step with this app:
+# Keeps the Home Assistant integration repo (EuroJackpot-Analyzer-HA) in step with this app:
 # copies the shared core (rules / stats / generators) + the history snapshot, runs the HA tests,
 # then commits and pushes the HA repo. Called by the post-commit hook when shared files change.
 # Usage:  powershell -ExecutionPolicy Bypass -File tools\sync_ha.ps1 [-NoPush]
-param([string]$HaRepo = "C:\Users\DimitrisSarlis\Projects\EuroJackpot-HA", [switch]$NoPush)
+param([string]$HaRepo = "C:\Users\DimitrisSarlis\Projects\EuroJackpot-Analyzer-HA", [switch]$NoPush)
 $ErrorActionPreference = "Stop"
 $app = Split-Path $PSScriptRoot -Parent
 Set-Location $app

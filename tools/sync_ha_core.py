@@ -1,7 +1,7 @@
 """Copy the pure-Python core (rules, stats, generators) and a compact numbers-only history into the
 Home Assistant integration repo, so both projects use identical logic.
 
-Usage:  python -m tools.sync_ha_core C:\\path\\to\\EuroJackpot-HA
+Usage:  python -m tools.sync_ha_core C:\\path\\to\\EuroJackpot-Analyzer-HA
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ CORE_FILES = ["rules.py", "stats.py", "generators.py"]
 
 
 def main(ha_repo: str) -> None:
-    comp = Path(ha_repo) / "custom_components" / "eurojackpot"
+    comp = Path(ha_repo) / "custom_components" / "eurojackpot_analyzer"
     core = comp / "core"
     core.mkdir(parents=True, exist_ok=True)
     (core / "__init__.py").write_text('"""Vendored from EuroJackpot-Analyzer (tools/sync_ha_core.py). Do not edit here."""\n',
