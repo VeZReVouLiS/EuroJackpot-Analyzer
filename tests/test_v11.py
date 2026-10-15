@@ -88,7 +88,8 @@ def test_version_compare():
     assert not appupdate.is_newer("v1.1.0", "1.1.0") and not appupdate.is_newer("1.0.9", "1.1.0")
 
 
-def test_pick_assets_only_accepts_own_repo():
+def test_pick_assets_only_accepts_own_repo(monkeypatch):
+    monkeypatch.setattr(appupdate.version, "RELEASE_ASSET", "EuroJackpotApp-portable-win.zip")
     rel = {"assets": [
         {"name": "EuroJackpotApp-portable-win.zip", "browser_download_url": "https://github.com/me/app/releases/download/v1/EuroJackpotApp-portable-win.zip"},
         {"name": "EuroJackpotApp-portable-win.zip.sha256", "browser_download_url": "https://evil.example.com/x.sha256"},
