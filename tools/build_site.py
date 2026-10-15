@@ -72,9 +72,9 @@ def read_version() -> str:
 
 
 def build(out: Path, data: Path, version: str) -> Path:
-    if out.exists():
-        shutil.rmtree(out)
-    out.mkdir(parents=True)
+    out.mkdir(parents=True, exist_ok=True)
+    for child in out.iterdir():           # empty the folder instead of deleting it (a dev server may be running in it)
+        shutil.rmtree(child) if child.is_dir() else child.unlink()
     # the UI of the desktop app
     for p in UI.rglob("*"):
         if p.is_file() and p.name not in SKIP_UI:

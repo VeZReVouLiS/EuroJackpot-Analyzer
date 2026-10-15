@@ -2,7 +2,7 @@
 
 🇬🇷 **[Ελληνικές οδηγίες → README.md](README.md)**
 
-An app for **Windows** (portable) and **Mac** that:
+An app for **Windows** (portable), **Mac**, **iPhone / iPad** and **Android** that:
 - downloads the complete EuroJackpot history (since 23 March 2012) and keeps it up to date by itself,
 - shows statistics with charts (frequency, overdue numbers, odd/even, sum, pairs),
 - shows the winners and prizes of every draw **the way they are presented in your country** (Greece or Germany) and where the top prizes were won,
@@ -133,6 +133,30 @@ Typical causes of a `403 Forbidden` error: a VPN, a corporate network/proxy or a
 - **White window or nothing opens**: install the *Microsoft Edge WebView2 Runtime* from Microsoft. If that does not help, run `EuroJackpotApp.exe --browser`.
 - Requirements: Windows 10 (1803+) or 11, with Microsoft Edge.
 
+### 10. iPhone, iPad and Android
+The same app also works on your phone, with no account: statistics, ticket generator, ticket history with automatic prize check, next draw with countdown, country and language (Greek / English / German).
+
+![The app on an iPhone](docs/images/phone-iphone-en.png)
+
+#### iPhone and iPad (web app)
+1. Open **https://vezrevoulis.github.io/EuroJackpot-Analyzer/** in **Safari**.
+2. Tap **Share** ⬆ and then **“Add to Home Screen”**.
+3. The app appears with its own icon and opens full screen. It also works without internet, with the history it has already downloaded.
+4. New draws come with “Update draws” (or automatically when it opens). The draws file is updated on GitHub **every morning and after every draw**, and the app itself updates by itself.
+5. Your data (tickets, settings) stays **on the phone**. If you delete the app icon, it is deleted too. For a backup tap **Settings → Export data → JSON**, then **“Save to Files”** and pick **iCloud Drive**. The same file loads on another phone, on a Mac or on Windows with “Import”.
+
+#### Android (APK)
+1. From the **Releases** page download **`EuroJackpotApp-android.apk`**.
+2. Open it. The first time Android asks you to allow **“Install from this source”** for the browser or file manager you used.
+3. If Google Play Protect warns about an “unknown developer” (the app is not on the Play Store): **More details → Install anyway**.
+4. **Updating**: Settings → Application → “Check for new version”. When there is one, download the new APK and install it over the old one. Your data stays.
+5. Backup: Settings → Export data. The share sheet opens, where you can save the file e.g. to Google Drive.
+6. Do not want an APK? Open https://vezrevoulis.github.io/EuroJackpot-Analyzer/ in **Chrome** and choose **⋮ → Add to Home screen**.
+
+![The app on an Android phone](docs/images/phone-android-en.png)
+
+> The screenshots show the app at iPhone and Android screen sizes. The phone app does everything the desktop app does, except installing a new version from inside the app (on the iPhone it updates by itself, on Android you install a new APK).
+
 ---
 
 ## For developers
@@ -142,6 +166,7 @@ Typical causes of a `403 Forbidden` error: a VPN, a corporate network/proxy or a
 - **Tests**: `.venv\Scripts\python -m pytest -q`
 - **Offline seed** (bundled history): `python -m tools.make_seed`
 - **Build**: `powershell -ExecutionPolicy Bypass -File build\build_windows.ps1` → `dist\EuroJackpotApp\`
+- **Phone app**: `web/*.js` is the logic (statistics, algorithms, prize check, import/export) in JavaScript, equivalent to the Python (checked in CI: `python -m tools.make_golden` and `node --test web/tests/core.test.mjs`). `python -m tools.build_site` builds the `site/` folder (UI + logic + draws + PWA). `.github/workflows/web.yml` publishes it on GitHub Pages and refreshes it every morning and after every draw. `.github/workflows/android.yml` wraps it with Capacitor into an APK, signs it (secrets `ANDROID_KEYSTORE_B64` and `ANDROID_KEYSTORE_PASSWORD`) and adds it to every release.
 - **Build for Mac**: on a Mac `sh build/build_mac.sh` → `dist/EuroJackpotApp-mac-<arm64|intel>.zip`. On GitHub `.github/workflows/mac.yml` runs it for every new release (Apple Silicon + Intel), runs the tests and a startup check (`--selftest`) and adds the zips to the release.
 - **Release** (needs `gh auth login` and `GITHUB_REPO` in `app/version.py`): `powershell -ExecutionPolicy Bypass -File build\release.ps1`
 

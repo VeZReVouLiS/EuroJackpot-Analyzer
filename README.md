@@ -2,7 +2,7 @@
 
 🇬🇧 **[English instructions → README.en.md](README.en.md)**
 
-Πρόγραμμα για **Windows** (portable) και **Mac** που:
+Πρόγραμμα για **Windows** (portable), **Mac**, **iPhone / iPad** και **Android** που:
 - κατεβάζει όλο το ιστορικό του EuroJackpot (από 23/3/2012) και το ενημερώνει μόνο του,
 - δείχνει στατιστικά με γραφήματα (συχνότητα, καθυστέρηση, μονοί/ζυγοί, άθροισμα, ζεύγη),
 - δείχνει για κάθε κλήρωση τις επιτυχίες και τα κέρδη **όπως παρουσιάζονται στη χώρα σου** (Ελλάδα ή Γερμανία) και πού κερδήθηκε το τζάκποτ,
@@ -134,6 +134,30 @@
 - **Λευκό παράθυρο ή δεν ανοίγει**: εγκατάστησε το *Microsoft Edge WebView2 Runtime* από τη Microsoft. Αν δεν βοηθήσει, τρέξε το `EuroJackpotApp.exe --browser`.
 - Απαιτήσεις: Windows 10 (1803+) ή 11, με Microsoft Edge.
 
+### 10. iPhone, iPad και Android
+Η ίδια εφαρμογή δουλεύει και στο κινητό, χωρίς λογαριασμό: στατιστικά, γεννήτρια, ιστορικό δελτίων με αυτόματο έλεγχο κερδών, επόμενη κλήρωση με αντίστροφη μέτρηση, χώρα και γλώσσα (Ελληνικά / English / Deutsch).
+
+![Η εφαρμογή σε iPhone](docs/images/phone-iphone.png)
+
+#### iPhone και iPad (web app)
+1. Άνοιξε στο **Safari** τη διεύθυνση **https://vezrevoulis.github.io/EuroJackpot-Analyzer/**
+2. Πάτα **Κοινοποίηση** ⬆ και μετά **«Προσθήκη στην οθόνη Αφετηρίας»**.
+3. Η εφαρμογή εμφανίζεται με δικό της εικονίδιο και ανοίγει σε πλήρη οθόνη. Δουλεύει και χωρίς internet με το ιστορικό που έχει ήδη κατεβάσει.
+4. Οι νέες κληρώσεις κατεβαίνουν με «Ενημέρωση κληρώσεων» (ή αυτόματα στο άνοιγμα). Το αρχείο κληρώσεων ενημερώνεται στο GitHub **κάθε πρωί και μετά από κάθε κλήρωση**, και η ίδια η εφαρμογή ενημερώνεται μόνη της.
+5. Τα δεδομένα σου (δελτία, ρυθμίσεις) μένουν **στο κινητό**. Αν σβήσεις το εικονίδιο της εφαρμογής, σβήνονται κι αυτά. Για αντίγραφο ασφαλείας πάτα **Ρυθμίσεις → Εξαγωγή δεδομένων → JSON**, μετά **«Αποθήκευση στα Αρχεία»** και διάλεξε το **iCloud Drive**. Το ίδιο αρχείο φορτώνεται σε άλλο κινητό, στο Mac ή στα Windows με «Εισαγωγή».
+
+#### Android (APK)
+1. Από τη σελίδα **Releases** κατέβασε το **`EuroJackpotApp-android.apk`**.
+2. Άνοιξέ το. Την πρώτη φορά το Android ζητά να επιτρέψεις **«Εγκατάσταση από αυτή την πηγή»** για τον browser ή τον διαχειριστή αρχείων που χρησιμοποιείς.
+3. Αν το Google Play Protect προειδοποιήσει για «άγνωστο εκδότη» (η εφαρμογή δεν είναι στο Play Store): **Περισσότερα → Εγκατάσταση ούτως ή άλλως**.
+4. **Ενημέρωση**: Ρυθμίσεις → Εφαρμογή → «Έλεγχος για νέα έκδοση». Όταν υπάρχει νέα, κατέβασε το νέο APK και εγκατέστησέ το πάνω στο παλιό. Τα δεδομένα μένουν.
+5. Αντίγραφο: Ρυθμίσεις → Εξαγωγή δεδομένων. Ανοίγει το παράθυρο κοινοποίησης, από όπου το αποθηκεύεις π.χ. στο Google Drive.
+6. Δεν θες APK; Άνοιξε τη διεύθυνση https://vezrevoulis.github.io/EuroJackpot-Analyzer/ στο **Chrome** και διάλεξε **⋮ → Προσθήκη στην αρχική οθόνη**.
+
+![Η εφαρμογή σε Android](docs/images/phone-android.png)
+
+> Τα screenshots δείχνουν την εφαρμογή σε μέγεθος οθόνης iPhone και Android. Η εφαρμογή για κινητά κάνει όλα όσα και η εφαρμογή υπολογιστή, εκτός από την αυτόματη εγκατάσταση νέας έκδοσης μέσα από την ίδια την εφαρμογή (στο iPhone γίνεται μόνη της, στο Android με νέο APK).
+
 ---
 
 ## For developers
@@ -143,6 +167,7 @@
 - **Tests**: `.venv\Scripts\python -m pytest -q`
 - **Offline seed** (bundled history): `python -m tools.make_seed`
 - **Build**: `powershell -ExecutionPolicy Bypass -File build\build_windows.ps1` → `dist\EuroJackpotApp\`
+- **Εφαρμογή για κινητά**: τα `web/*.js` είναι η λογική (στατιστικά, αλγόριθμοι, έλεγχος κερδών, εισαγωγή/εξαγωγή) σε JavaScript, ίδια με την Python (έλεγχος ισοδυναμίας στο CI: `python -m tools.make_golden` και `node --test web/tests/core.test.mjs`). `python -m tools.build_site` φτιάχνει το φάκελο `site/` (UI + λογική + κληρώσεις + PWA). Το `.github/workflows/web.yml` τον δημοσιεύει στο GitHub Pages και τον ανανεώνει κάθε πρωί και μετά από κάθε κλήρωση. Το `.github/workflows/android.yml` τον τυλίγει με Capacitor σε APK, το υπογράφει (secrets `ANDROID_KEYSTORE_B64` και `ANDROID_KEYSTORE_PASSWORD`) και το προσθέτει σε κάθε release.
 - **Build για Mac**: σε Mac `sh build/build_mac.sh` → `dist/EuroJackpotApp-mac-<arm64|intel>.zip`. Στο GitHub το `.github/workflows/mac.yml` το τρέχει αυτόματα σε κάθε νέο release (Apple Silicon + Intel), τρέχει tests και δοκιμή εκκίνησης (`--selftest`) και προσθέτει τα zip στο release.
 - **Release** (needs `gh auth login` and `GITHUB_REPO` in `app/version.py`): `powershell -ExecutionPolicy Bypass -File build\release.ps1`
 

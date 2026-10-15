@@ -1,4 +1,5 @@
 :root {
+  --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px);
   --bg: #0b1020; --bg2: #121a33; --card: rgba(255,255,255,.06); --card-b: rgba(255,255,255,.10);
   --text: #eef2ff; --muted: #94a3c4; --accent: #7c5cff; --accent2: #22d3ee; --good: #34d399; --bad: #f87171;
   --gold1: #fde68a; --gold2: #f59e0b; --ball1: #8b9cff; --ball2: #4338ca; --shadow: 0 10px 40px rgba(0,0,0,.35);
@@ -257,12 +258,12 @@ td.num { white-space: nowrap; }
 /* ---------- phones (web app / Android): bottom navigation, one column ---------- */
 html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 button, .chip, .algo { touch-action: manipulation; }
-.install-tip { position: fixed; left: .8rem; right: .8rem; bottom: calc(5rem + env(safe-area-inset-bottom)); z-index: 70; display: flex; align-items: center; gap: .6rem;
+.install-tip { position: fixed; left: .8rem; right: .8rem; bottom: calc(5rem + var(--safe-bottom)); z-index: 70; display: flex; align-items: center; gap: .6rem;
   padding: .7rem .9rem; border-radius: 1rem; background: var(--bg2); border: 1px solid var(--accent); box-shadow: var(--shadow); font-size: .9rem; font-weight: 600; }
 @media (max-width: 760px) {
   body { overflow: hidden; }
   #app { display: block; height: 100dvh; }
-  #sidebar { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 30; flex-direction: row; gap: 0; padding: .3rem .4rem calc(.3rem + env(safe-area-inset-bottom));
+  #sidebar { position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 30; flex-direction: row; gap: 0; padding: .3rem .4rem calc(.3rem + var(--safe-bottom));
     border-right: 0; border-top: 1px solid var(--card-b); background: var(--bg2); }
   .brand, .side-foot { display: none; }
   #nav { flex-direction: row; width: 100%; justify-content: space-around; gap: .1rem; }
@@ -271,8 +272,8 @@ button, .chip, .algo { touch-action: manipulation; }
   .nav-btn .ico { font-size: 1.3rem; }
   .nav-btn .nav-badge { position: absolute; margin: 0; transform: translate(1.2rem, -.2rem); }
   .nav-btn { position: relative; }
-  #main { height: 100dvh; padding-bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
-  #topbar { flex-wrap: wrap; gap: .3rem .6rem; padding: calc(.5rem + env(safe-area-inset-top)) .8rem .3rem; }
+  #main { height: 100dvh; padding-bottom: calc(4.4rem + var(--safe-bottom)); }
+  #topbar { flex-wrap: wrap; gap: .3rem .6rem; padding: calc(.5rem + var(--safe-top)) .8rem .3rem; }
   .status { order: 2; width: 100%; font-size: .78rem; min-height: 0; }
   .top-actions { margin-left: auto; gap: .35rem; }
   #btn-full { display: none; }
@@ -300,7 +301,23 @@ button, .chip, .algo { touch-action: manipulation; }
   .flags { gap: .5rem; overflow-y: auto; align-content: flex-start; }
   .flag-tile { flex: 0 0 calc(33.333% - .34rem); height: 5.4rem; border-radius: 1rem; } .flag-name { font-size: .75rem; padding: .3rem; }
   .lang-tile { width: 44%; } .lang-tile b { font-size: 1.1rem; }
-  .toast { bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  .toast { bottom: calc(5rem + var(--safe-bottom)); }
   .dd-menu { max-height: 60dvh; }
 }
 @media (max-width: 760px) { .algos { grid-template-columns: repeat(2, minmax(0, 1fr)); } .algo { padding: .6rem .7rem; font-size: .85rem; } }
+@media (max-width: 760px) {
+  #main { min-width: 0; max-width: 100vw; overflow-x: hidden; }
+  .view { max-width: 100vw; overflow-x: hidden; }
+  #view-history table th:nth-child(3), #view-history table td:nth-child(3) { display: none; }       /* source column: no room on a phone */
+  #view-history .ball.sm { width: 1.75rem; height: 1.75rem; font-size: .8rem; }
+  #view-history td { padding: .55rem .3rem; }
+  .next-box { padding: .9rem .6rem; } .next-title { font-size: .95rem; } .next-title b { display: block; margin: .15rem 0 0; }
+  .countdown { width: 100%; gap: .25rem; } .cd-cell { min-width: 0; flex: 1; padding: .35rem .2rem; } .countdown i { font-size: 1.3rem; }
+  .cd-cell b { font-size: 1.6rem; } .cd-cell span { font-size: .62rem; }
+}
+
+@media (max-width: 760px) {
+  .splash { padding-top: calc(.5rem + var(--safe-top)); padding-bottom: calc(.5rem + var(--safe-bottom)); }
+  .detail-box td:first-child { white-space: nowrap; }
+  .detail-box .tag-gr { display: block; margin: .15rem 0 0; font-size: .6rem; width: fit-content; }
+}

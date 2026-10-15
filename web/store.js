@@ -16,7 +16,8 @@ export async function openStore() {
   const cache = new Map();
   let db = null;
   try {
-    db = await open();
+    // some browsers never answer (blocked or private storage): do not wait for ever, work from memory then
+    db = await Promise.race([open(), new Promise((_, reject) => setTimeout(() => reject(new Error("indexedDB timeout")), 3000))]);
     await new Promise((resolve, reject) => {
       const tx = db.transaction(STORE, "readonly"), req = tx.objectStore(STORE).openCursor();
       req.onsuccess = () => { const c = req.result; if (c) { cache.set(c.key, c.value); c.continue(); } else resolve(); };

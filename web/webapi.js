@@ -42,7 +42,7 @@ export async function createApi() {
   async function fetchDataset() {
     const urls = [];
     const here = new URL("data/draws.json", location.href).href;
-    if (isNative() || !here.startsWith(PAGES)) urls.push(PAGES + "data/draws.json");     // the freshest copy first (native app / other host)
+    if (isNative() || (!here.startsWith(PAGES) && !/^(localhost|127\.|\[::1\])/.test(location.hostname))) urls.push(PAGES + "data/draws.json");     // the freshest copy first (native app / other host)
     urls.push(here);
     const errors = {};
     for (const url of urls) {

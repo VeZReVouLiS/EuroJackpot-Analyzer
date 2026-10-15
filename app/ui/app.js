@@ -670,7 +670,7 @@ function installTip() {
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const standalone = window.navigator.standalone || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
   let dismissed = false; try { dismissed = localStorage.getItem("ej_install_tip") === "1"; } catch (e) { /* private mode */ }
-  if (!window.EJ_WEB || window.Capacitor || !ios || standalone || dismissed || !S.t["web.install_ios"]) return;
+  if (!window.EJ_WEB || window.Capacitor || !ios || standalone || dismissed || !S.t["web.install_ios"] || new URLSearchParams(location.hash.slice(1)).get("static")) return;
   const el = document.createElement("div"); el.className = "install-tip";
   el.innerHTML = `<span>${esc(tr("web.install_ios"))}</span><button class="btn ghost" aria-label="close">✕</button>`;
   $("button", el).onclick = () => { try { localStorage.setItem("ej_install_tip", "1"); } catch (e) { /* ignore */ } el.remove(); };
@@ -685,6 +685,7 @@ async function boot() {
   S.cat = await call("get_countries");
   applyTheme();
   const hp0 = new URLSearchParams(location.hash.slice(1));      // dev/docs helper: #country=DE&lang=de&splash=1
+  if (hp0.get("safe")) { document.documentElement.style.setProperty("--safe-top", hp0.get("safe") + "px"); document.documentElement.style.setProperty("--safe-bottom", "20px"); }   // docs: notch / status bar
   if (hp0.get("country") && hp0.get("country") !== S.settings.country) await setSetting("country", hp0.get("country"));
   if (hp0.get("lang") && hp0.get("lang") !== S.settings.lang) await setSetting("lang", hp0.get("lang"));
   if (hp0.get("splash")) await setSetting("country", "");
@@ -716,6 +717,11 @@ async function boot() {
   if (hp.get("view")) S.view = hp.get("view");
   if (!S.info.count) { await runUpdate({ firstRun: true }); }
   else {
+    if (hp.get("demo")) {              // docs: three demo tickets (two checked against past draws, one waiting)
+      const mk = async (n, target) => { const t = await call("generate", n, "auto_column", [], "all", null, target); await call("set_ticket_played", t.id, true); };
+      await mk(5, "2026-10-13"); await mk(3, "2026-10-09"); await mk(4, (await call("get_next_draws", 1))[0]);
+      await call("evaluate_tickets"); await refreshInfo();
+    }
     await renderAll();
     if (hp.get("gen")) { await setSetting("columns", +hp.get("gen")); await setSetting("algo", "auto_column"); await renderTicket(); await generate(); }
     if (hp.get("draw")) await openDraw(hp.get("draw"));

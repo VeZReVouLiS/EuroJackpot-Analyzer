@@ -85,6 +85,8 @@ jobs:
           "$BT/apksigner" verify --print-certs EuroJackpotApp-android.apk | head -3
           sha256sum EuroJackpotApp-android.apk > EuroJackpotApp-android.apk.sha256
           ls -la EuroJackpotApp-android.apk
+          unzip -l EuroJackpotApp-android.apk | grep -q "assets/public/index.html" && echo "web app is inside the APK"
+          unzip -l EuroJackpotApp-android.apk | grep -q "assets/public/data/draws.json" && echo "draws file is inside the APK"
       - uses: actions/upload-artifact@v4
         with:
           name: EuroJackpotApp-android
