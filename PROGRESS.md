@@ -15,7 +15,8 @@ Plan: `C:\Users\DimitrisSarlis\.claude\plans\moonlit-honking-dawn.md`
 ## v1.1.0 (in progress)
 - [x] prize details per draw, export/import round-trip, offline seed, empty state, diagnostics, app updater (code)
 - [x] README with instructions + screenshots (docs/images)
-- [ ] gh auth login (user) -> create public repo, set GITHUB_REPO in app/version.py, run build\release.ps1
+- [x] GitHub: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer (public), releases v1.1.0 and v1.1.1 (zip + sha256); in-app update install tested end-to-end
+- Release procedure: bump app/version.py + CHANGELOG.md, then `powershell -ExecutionPolicy Bypass -File build\release.ps1` (add -SkipSeed to reuse the bundled seed)
 - [ ] 403 on the user's other PC: root cause unknown; hardened (browser headers, fail-fast, per-source error). Ask for the "Έλεγχος σύνδεσης" report if it persists.
 
 ## Future (user requests, to do after v1.1.0)
