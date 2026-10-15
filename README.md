@@ -2,7 +2,7 @@
 
 🇬🇧 **[English instructions → README.en.md](README.en.md)**
 
-Portable πρόγραμμα για Windows που:
+Πρόγραμμα για **Windows** (portable) και **Mac** που:
 - κατεβάζει όλο το ιστορικό του EuroJackpot (από 23/3/2012) και το ενημερώνει μόνο του,
 - δείχνει στατιστικά με γραφήματα (συχνότητα, καθυστέρηση, μονοί/ζυγοί, άθροισμα, ζεύγη),
 - δείχνει για κάθε κλήρωση τις επιτυχίες και τα κέρδη **όπως παρουσιάζονται στη χώρα σου** (Ελλάδα ή Γερμανία) και πού κερδήθηκε το τζάκποτ,
@@ -24,6 +24,13 @@ Portable πρόγραμμα για Windows που:
 2. Τρέξε το `EuroJackpotApp.exe`. Δεν χρειάζεται εγκατάσταση. Χρειάζεται μόνο το *Microsoft Edge WebView2*, που υπάρχει ήδη σε Windows 10/11.
 3. Η εφαρμογή ανοίγει αμέσως με το ιστορικό που περιέχει μέσα της. Αν υπάρχει internet, κατεβάζει και τις νεότερες κληρώσεις.
 4. Τα δεδομένα και οι ρυθμίσεις σώζονται στον φάκελο `data` δίπλα στο exe. Για να μεταφέρεις την εφαρμογή σε άλλο PC, αντίγραψε όλο τον φάκελο.
+
+#### Εγκατάσταση σε Mac
+1. Από τη σελίδα **Releases** κατέβασε το zip που ταιριάζει στο Mac σου: `EuroJackpotApp-mac-arm64.zip` για **Apple Silicon** (M1, M2, M3, M4) ή `EuroJackpotApp-mac-intel.zip` για **Intel**. (Μενού Apple → Σχετικά με αυτό το Mac → Τσιπ / Επεξεργαστής.)
+2. Άνοιξε το zip και σύρε το **EuroJackpot Analyzer** στον φάκελο **Εφαρμογές** (Applications).
+3. Την πρώτη φορά το macOS λέει ότι η εφαρμογή δεν μπορεί να ελεγχθεί, γιατί δεν έχει πληρωμένη υπογραφή Apple. **Δεξί κλικ (ή Control + κλικ) στην εφαρμογή → Άνοιγμα → Άνοιγμα**. Εμφανίζεται μία φορά. Αν δεν υπάρχει το κουμπί: **Ρυθμίσεις συστήματος → Απόρρητο και ασφάλεια → «Άνοιγμα ούτως ή άλλως»**. Εναλλακτικά, στο Terminal: `xattr -dr com.apple.quarantine "/Applications/EuroJackpot Analyzer.app"`.
+4. Τα δεδομένα και οι ρυθμίσεις σώζονται στο `~/Library/Application Support/EuroJackpot Analyzer`. Η ενημέρωση της εφαρμογής (Ρυθμίσεις → Εφαρμογή) δουλεύει και στο Mac, αρκεί η εφαρμογή να βρίσκεται σε φάκελο όπου έχεις δικαίωμα εγγραφής (π.χ. Εφαρμογές). Αλλιώς κατέβασε το νέο zip από τη σελίδα Releases.
+5. Όλες οι λειτουργίες είναι ίδιες με τα Windows. Η εξαγωγή και η εισαγωγή αρχείων χρησιμοποιούν τα κανονικά παράθυρα αρχείων του macOS.
 
 ### 2. Επιλογή χώρας και γλώσσας
 Στην πρώτη εκκίνηση εμφανίζεται η οθόνη **«Choose your country»** με τις σημαίες των χωρών του EuroJackpot. Περνάς το ποντίκι πάνω από μια σημαία και «ανάβει» με χρώματα, ενώ οι υπόλοιπες μένουν γκρι.
@@ -133,6 +140,7 @@ Portable πρόγραμμα για Windows που:
 - **Tests**: `.venv\Scripts\python -m pytest -q`
 - **Offline seed** (bundled history): `python -m tools.make_seed`
 - **Build**: `powershell -ExecutionPolicy Bypass -File build\build_windows.ps1` → `dist\EuroJackpotApp\`
+- **Build για Mac**: σε Mac `sh build/build_mac.sh` → `dist/EuroJackpotApp-mac-<arm64|intel>.zip`. Στο GitHub το `.github/workflows/mac.yml` το τρέχει αυτόματα σε κάθε νέο release (Apple Silicon + Intel), τρέχει tests και δοκιμή εκκίνησης (`--selftest`) και προσθέτει τα zip στο release.
 - **Release** (needs `gh auth login` and `GITHUB_REPO` in `app/version.py`): `powershell -ExecutionPolicy Bypass -File build\release.ps1`
 
 ### Countries and languages

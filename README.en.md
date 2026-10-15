@@ -2,7 +2,7 @@
 
 🇬🇷 **[Ελληνικές οδηγίες → README.md](README.md)**
 
-A portable Windows app that:
+An app for **Windows** (portable) and **Mac** that:
 - downloads the complete EuroJackpot history (since 23 March 2012) and keeps it up to date by itself,
 - shows statistics with charts (frequency, overdue numbers, odd/even, sum, pairs),
 - shows the winners and prizes of every draw **the way they are presented in your country** (Greece or Germany) and where the top prizes were won,
@@ -24,6 +24,13 @@ Greek / English / German, dark / light theme, window or full screen (F11).
 2. Run `EuroJackpotApp.exe`. No installation is needed. It only requires *Microsoft Edge WebView2*, which is already part of Windows 10/11.
 3. The app opens immediately with the history bundled inside it. If you are online it also downloads the newest draws.
 4. Your data and settings are stored in the `data` folder next to the exe. To move the app to another PC, copy the whole folder.
+
+#### Installation on a Mac
+1. From the **Releases** page download the zip that matches your Mac: `EuroJackpotApp-mac-arm64.zip` for **Apple Silicon** (M1, M2, M3, M4) or `EuroJackpotApp-mac-intel.zip` for **Intel**. (Apple menu → About This Mac → Chip / Processor.)
+2. Open the zip and drag **EuroJackpot Analyzer** into your **Applications** folder.
+3. The first time, macOS says the app cannot be verified because it has no paid Apple signature. **Right-click (or Control-click) the app → Open → Open**. It appears once. If there is no Open button: **System Settings → Privacy & Security → “Open Anyway”**. Alternatively, in Terminal: `xattr -dr com.apple.quarantine "/Applications/EuroJackpot Analyzer.app"`.
+4. Your data and settings are stored in `~/Library/Application Support/EuroJackpot Analyzer`. Updating the app (Settings → Application) works on the Mac too, as long as the app sits in a folder you can write to (e.g. Applications). Otherwise download the new zip from the Releases page.
+5. All features are the same as on Windows. Import and export use the normal macOS file dialogs.
 
 ### 2. Choosing your country and language
 On the first start the **“Choose your country”** screen appears, with the flags of the EuroJackpot countries. Move the mouse over a flag and it lights up in colour while all the others stay grey.
@@ -132,6 +139,7 @@ Typical causes of a `403 Forbidden` error: a VPN, a corporate network/proxy or a
 - **Tests**: `.venv\Scripts\python -m pytest -q`
 - **Offline seed** (bundled history): `python -m tools.make_seed`
 - **Build**: `powershell -ExecutionPolicy Bypass -File build\build_windows.ps1` → `dist\EuroJackpotApp\`
+- **Build for Mac**: on a Mac `sh build/build_mac.sh` → `dist/EuroJackpotApp-mac-<arm64|intel>.zip`. On GitHub `.github/workflows/mac.yml` runs it for every new release (Apple Silicon + Intel), runs the tests and a startup check (`--selftest`) and adds the zips to the release.
 - **Release** (needs `gh auth login` and `GITHUB_REPO` in `app/version.py`): `powershell -ExecutionPolicy Bypass -File build\release.ps1`
 
 ### Countries and languages
