@@ -42,7 +42,13 @@ function toast(msg) {
   const el = $("#toast"); el.textContent = msg; el.classList.remove("hidden");
   clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.add("hidden"), 2200);
 }
-function setStatus(msg, cls = "") { const s = $("#status"); s.textContent = msg; s.className = "status " + cls; }
+// msg: a string, or a function returning one (re-evaluated when the language changes, so it is always translated)
+function setStatus(msg, cls = "") { S.status = { msg, cls }; renderStatus(); }
+function renderStatus() {
+  const s = $("#status"), st = S.status; if (!s || !st) return;
+  s.textContent = typeof st.msg === "function" ? st.msg() : st.msg;
+  s.className = "status " + st.cls;
+}
 
 /* ---------- i18n / theme ---------- */
 async function loadLocale() {
@@ -51,6 +57,7 @@ async function loadLocale() {
   $$("[data-i18n]").forEach(el => el.textContent = tr(el.dataset.i18n));
   $("#btn-lang").textContent = S.settings.lang.toUpperCase();
   document.title = tr("app.title");
+  renderStatus();
 }
 function applyTheme() {
   document.documentElement.dataset.theme = S.settings.theme;
@@ -85,7 +92,7 @@ async function runUpdate({ firstRun = false } = {}) {
   if (S.polling) return;
   $("#btn-update").disabled = true;
   if (firstRun) overlay(true, { title: tr("first.title"), text: tr("first.text") });
-  else setStatus(tr("update.running"));
+  else setStatus(() => tr("update.running"));
   await call("start_update");
   await new Promise(resolve => {
     S.polling = setInterval(async () => {
@@ -101,7 +108,7 @@ async function runUpdate({ firstRun = false } = {}) {
     overlay(false);
     if (p.error) {          // never block the app: show the error and (if there is no data) the empty state
       S.lastError = p.error;
-      setStatus(tr("update.error", { err: p.error }), "err");
+      setStatus(() => tr("update.error", { err: p.error }), "err");
       await refreshInfo(); await renderAll();
       return;
     }
@@ -112,7 +119,7 @@ async function runUpdate({ firstRun = false } = {}) {
       const total = wins.reduce((a, w) => a + w.total_prize, 0);
       toast(tr("mt.win_toast", { amount: money(total), date: fmtDate(wins[0].target_date) }));
     }
-    setStatus((r.added ? tr("update.done", r) : tr("update.uptodate", r)) + (r.verified ? "  " + tr("update.verified") : ""), "ok");
+    setStatus(() => (r.added ? tr("update.done", r) : tr("update.uptodate", r)) + (r.verified ? "  " + tr("update.verified") : ""), "ok");
     await refreshInfo(); await renderAll();
   });
 }
@@ -538,7 +545,7 @@ async function boot() {
   if (S.settings.check_app_updates && S.info.repo_configured) {     // quiet background check, shows a badge only
     call("check_app_update").then(r => { S.appUpdate = r; updateBadge(); }).catch(() => {});
   }
-  if (S.info.seed && S.info.count) setStatus(tr("update.seed", S.info.seed));
+  if (S.info.seed && S.info.count) setStatus(() => tr("update.seed", S.info.seed));
   const hp = new URLSearchParams(location.hash.slice(1));      // dev/docs helper: #view=ticket&lang=en&theme=light&draw=2026-10-13&gen=12
   if (hp.get("lang") && hp.get("lang") !== S.settings.lang) { await setSetting("lang", hp.get("lang")); await loadLocale(); await refreshInfo(); }
   if (hp.get("theme") && hp.get("theme") !== S.settings.theme) { await setSetting("theme", hp.get("theme")); applyTheme(); }
