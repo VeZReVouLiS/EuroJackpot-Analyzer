@@ -9,6 +9,7 @@ if (-not (Test-Path $py)) { python -m venv .venv; & $py -m pip install -r requir
     --distpath dist --workpath build\work --specpath build\work `
     --add-data "$PWD\app\ui;app\ui" `
     --add-data "$PWD\app\locales;app\locales" `
+    --add-data "$PWD\app\seed;app\seed" `
     --collect-submodules webview `
     --paths "$PWD" `
     run.py

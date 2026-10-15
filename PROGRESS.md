@@ -12,7 +12,14 @@ Plan: `C:\Users\DimitrisSarlis\.claude\plans\moonlit-honking-dawn.md`
 - [x] M7 PyInstaller portable build (`build\build_windows.ps1`, 26 MB), verified from clean folder
 - 31 tests passing: `.venv\Scripts\python -m pytest -q`
 
-## Future
+## v1.1.0 (in progress)
+- [x] prize details per draw, export/import round-trip, offline seed, empty state, diagnostics, app updater (code)
+- [x] README with instructions + screenshots (docs/images)
+- [ ] gh auth login (user) -> create public repo, set GITHUB_REPO in app/version.py, run build\release.ps1
+- [ ] 403 on the user's other PC: root cause unknown; hardened (browser headers, fail-fast, per-source error). Ask for the "Έλεγχος σύνδεσης" report if it persists.
+
+## Future (user requests, to do after v1.1.0)
+- [ ] Splash screen at first launch: user picks language and country; app then shows country-specific info (draws/prizes/Allwyn-OPAP data for Greece, other countries' operators)
 - [ ] Mac build (same code; build with PyInstaller on a Mac, WKWebView is used by pywebview)
 - [ ] Allwyn account login: view / top up / play (needs research; Akamai-protected site)
 - [ ] Home Assistant integration (like the Attiki Odos one): sensors for last draw / overdue, optional play

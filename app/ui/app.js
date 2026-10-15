@@ -463,7 +463,16 @@ async function boot() {
     call("check_app_update").then(r => { S.appUpdate = r; updateBadge(); }).catch(() => {});
   }
   if (S.info.seed && S.info.count) setStatus(tr("update.seed", S.info.seed));
+  const hp = new URLSearchParams(location.hash.slice(1));      // dev/docs helper: #view=ticket&lang=en&theme=light&draw=2026-10-13&gen=12
+  if (hp.get("lang") && hp.get("lang") !== S.settings.lang) { await setSetting("lang", hp.get("lang")); await loadLocale(); await refreshInfo(); }
+  if (hp.get("theme") && hp.get("theme") !== S.settings.theme) { await setSetting("theme", hp.get("theme")); applyTheme(); }
+  if (hp.get("view")) S.view = hp.get("view");
   if (!S.info.count) { await runUpdate({ firstRun: true }); }
-  else { await renderAll(); if (S.settings.auto_update) runUpdate(); }
+  else {
+    await renderAll();
+    if (hp.get("gen")) { await setSetting("columns", +hp.get("gen")); await setSetting("algo", "auto_column"); await renderTicket(); await generate(); }
+    if (hp.get("draw")) await openDraw(hp.get("draw"));
+    if (S.settings.auto_update && !hp.toString()) runUpdate();
+  }
 }
 boot().catch(e => { console.error(e); setStatus(String(e), "err"); });
