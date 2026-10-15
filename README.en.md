@@ -28,7 +28,10 @@ Greek / English / German, dark / light theme, window or full screen (F11).
 #### Installation on a Mac
 1. From the **Releases** page download the zip that matches your Mac: `EuroJackpotApp-mac-arm64.zip` for **Apple Silicon** (M1, M2, M3, M4) or `EuroJackpotApp-mac-intel.zip` for **Intel**. (Apple menu → About This Mac → Chip / Processor.)
 2. Open the zip and drag **EuroJackpot Analyzer** into your **Applications** folder.
-3. The first time, macOS says the app cannot be verified because it has no paid Apple signature. **Right-click (or Control-click) the app → Open → Open**. It appears once. If there is no Open button: **System Settings → Privacy & Security → “Open Anyway”**. Alternatively, in Terminal: `xattr -dr com.apple.quarantine "/Applications/EuroJackpot Analyzer.app"`.
+3. The first time, macOS blocks the app (“Apple could not verify…”) because it has no paid Apple signature. It is not malware. **Click “Done” (not “Move to Trash”)** and then do one of these:
+   - **System Settings → Privacy & Security**, scroll to the “Security” section and click **“Open Anyway”** next to the message about EuroJackpot Analyzer, then confirm with your password. It is needed once.
+   - or in Terminal (also works before the first launch): `xattr -dr com.apple.quarantine "/Applications/EuroJackpot Analyzer.app"`.
+   On older macOS (before Sequoia) right-click (or Control-click) → Open → Open is enough.
 4. Your data and settings are stored in `~/Library/Application Support/EuroJackpot Analyzer`. Updating the app (Settings → Application) works on the Mac too, as long as the app sits in a folder you can write to (e.g. Applications). Otherwise download the new zip from the Releases page.
 5. All features are the same as on Windows. Import and export use the normal macOS file dialogs.
 
