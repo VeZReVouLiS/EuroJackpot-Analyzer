@@ -1,27 +1,24 @@
 # Progress
 
 ## >>> ΠΟΥ ΕΧΟΥΜΕ ΜΕΙΝΕΙ (συνέχεια από το σπίτι) <<<
-Repo: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer (public). Τελευταίο release: **v1.2.0**.
+App: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer — release **v1.2.1**.
+Home Assistant: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA — release **v0.3.2**, εγκατεστημένο στο ha.dosman.gr μέσω HACS.
 
-**Έγιναν:** v1.1.3 (αυτόματη αφαίρεση του «Mark of the Web» από τα αρχεία — αιτία του pythonnet σφάλματος στο PC `dosma`),
-v1.2.0 (ιστορικό δελτίων «Τα δελτία μου» + αυτόματος έλεγχος κερδών + σύνολα + ειδοποίηση + export/import δελτίων),
-README με οδηγίες και 7 εικόνες (docs/images, παράγονται με headless Edge και hash params: `#static=1&view=...&lang=...&theme=...&gen=N&draw=YYYY-MM-DD&demo_update=1`).
+**Έγιναν (HA):** sensors + service `eurojackpot_analyzer.generate_ticket`· **panel στο πλαϊνό μενού** (`panel_custom`, όπως το GR e-Pass) πλήρους οθόνης με μεγάλα στοιχεία και κουμπί γλώσσας EL/EN (άμεση αλλαγή, θυμάται την επιλογή)·
+3 κάρτες Lovelace (last-draw, stats με χάρτη καθυστέρησης, ticket) που φορτώνονται αυτόματα· README με πραγματικά screenshots· CI πράσινο (tests σε Linux, hassfest, HACS).
+**Κανόνες:** (1) αλλαγές στον κοινό πυρήνα → sync στο HA repo (hook + `tools/sync_ha.ps1`)· (2) μικρές διορθώσεις στο changelog = «Bug fixes / μικρές διορθώσεις»· (3) ελληνικά ΧΩΡΙΣ all-caps (το `text-transform: uppercase` κρατά τους τόνους) — πρώτο γράμμα κεφαλαίο μόνο· (4) κάθε αλλαγή UI → ξαναβγάζουμε τα screenshots (app: headless Edge με hash params, HA: Chrome στο ha.dosman.gr + zoom crop χωρίς πλαϊνό μενού).
+**HA ενημέρωση:** HACS update → επανεκκίνηση HA → Ctrl+F5 στον browser.
 
-**Home Assistant:** repo https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA (local `C:\Users\DimitrisSarlis\Projects\EuroJackpot-Analyzer-HA`), ονομασία «EuroJackpot Analyzer» όπως η εφαρμογή,
-domain `eurojackpot_analyzer`. Sensors (τελευταία/επόμενη κλήρωση, τζάκποτ, most_overdue/most_frequent/least_frequent numbers, generated_ticket) + service `eurojackpot_analyzer.generate_ticket`.
-CI πράσινο (13 tests σε HA 2026.10 / Linux, hassfest, HACS). Το HA core δεν τρέχει σε Windows· τα integration tests τρέχουν μόνο στο GitHub Actions.
-**Εκκρεμεί:** (α) εγκατάσταση στο ha.dosman.gr μέσω HACS (απαιτεί επανεκκίνηση HA — ΜΕ ΕΓΚΡΙΣΗ του χρήστη), (β) εικόνες/screenshots του integration στο README (από πραγματικό dashboard στο HA), (γ) release/tag του HA repo (HACS προτιμά releases).
-**Συγχρονισμός:** κάθε commit στο app repo που αγγίζει `app/rules.py|stats.py|generators.py|seed/draws.json` τρέχει αυτόματα (post-commit hook) το `tools/sync_ha.ps1`. ΣΗΜΕΙΩΣΗ: τα tests του HA repo δεν τρέχουν τοπικά (Windows)· το script κάνει commit/push και το CI ελέγχει.
-**Changelog κανόνας:** μικρές διορθώσεις → μία γραμμή «Bug fixes / μικρές διορθώσεις». Εκκρεμεί στο app: «το μήνυμα κατάστασης ακολουθεί τη γλώσσα» (committed, δεν έχει κυκλοφορήσει).
+**Εύρημα για Γερμανία:** η επίσημη (γερμανική) πηγή με `adg=ja` δίνει ανά κατηγορία `aufteilung[]` ΜΟΝΟ για τις 3 πρώτες κατηγορίες (5+2, 5+1, 5+0): πού κερδήθηκε, ανά χώρα (~14 χώρες φαίνονται στο ιστορικό, μαζί με την Ελλάδα `GRC`) και για Γερμανία ανά ομόσπονδο κρατίδιο. Για τις υπόλοιπες κατηγορίες υπάρχει μόνο σύνολο όλων των χωρών. Νικητές Γερμανίας ανά κατηγορία δεν υπάρχουν σε καμία πηγή. Ιδέα: ενότητα «Πού κερδήθηκε» στο app και στο HA (top-3 κατηγορίες, Ελλάδα και Γερμανία ξεχωριστά).
 
 **Επόμενα βήματα:**
-1. Ολοκλήρωση HA (εκκρεμή παραπάνω).
-2. **Mac έκδοση** (ζήτηση χρήστη, αμέσως μετά το HA): ίδιος κώδικας· pywebview χρησιμοποιεί WKWebView· χρειάζεται Mac για build (PyInstaller) ή GitHub Actions `macos-latest` runner.
+1. «Πού κερδήθηκε» (ανά χώρα/κρατίδιο, 3 πρώτες κατηγορίες) σε app + HA.
+2. **Mac έκδοση** (ζήτηση χρήστη): ίδιος κώδικας, pywebview/WKWebView, build με PyInstaller σε Mac ή GitHub Actions `macos-latest`.
 3. Splash screen πρώτης εκκίνησης με επιλογή γλώσσας και χώρας.
-4. Allwyn login/παιχνίδι, μη υπογεγραμμένο exe (SmartScreen).
-Επιβεβαιώθηκε: το `dosma` PC δουλεύει με native παράθυρο (το παράθυρο unblock/SmartScreen βγαίνει μόνο την πρώτη φορά).
-Δοκιμή: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q` (57).
-Release: bump `app/version.py` + `CHANGELOG.md`, μετά `powershell -ExecutionPolicy Bypass -File build\release.ps1 -SkipSeed`.
+4. Allwyn login/παιχνίδι (app + HA), μη υπογεγραμμένο exe (SmartScreen).
+
+Δοκιμή app: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q` (57).
+Release app: bump `app/version.py` + `CHANGELOG.md`, μετά `powershell -ExecutionPolicy Bypass -File build\release.ps1 -SkipSeed`.
 Dev DB με demo δελτία: `data\eurojackpot.db` (git-ignored, δεν μπαίνει στο exe).
 ## Done
 - [x] M1 skeleton, venv (.venv), deps
