@@ -1,25 +1,25 @@
 # Progress
 
 ## >>> ΠΟΥ ΕΧΟΥΜΕ ΜΕΙΝΕΙ (συνέχεια από το σπίτι) <<<
-App: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer — release **v1.2.1**.
-Home Assistant: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA — release **v0.3.2**, εγκατεστημένο στο ha.dosman.gr μέσω HACS.
+App: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer — release **v1.3.0** (δημοσιεύτηκε).
+Home Assistant: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA — release **v0.4.0** δημοσιεύτηκε (CI πράσινο), **ΔΕΝ έχει εγκατασταθεί ακόμα στο ha.dosman.gr** (το HA τρέχει 0.3.2). Χρειάζεται έγκριση χρήστη για HACS update + επανεκκίνηση.
 
-**Έγιναν (HA):** sensors + service `eurojackpot_analyzer.generate_ticket`· **panel στο πλαϊνό μενού** (`panel_custom`, όπως το GR e-Pass) πλήρους οθόνης με μεγάλα στοιχεία και κουμπί γλώσσας EL/EN (άμεση αλλαγή, θυμάται την επιλογή)·
-3 κάρτες Lovelace (last-draw, stats με χάρτη καθυστέρησης, ticket) που φορτώνονται αυτόματα· README με πραγματικά screenshots· CI πράσινο (tests σε Linux, hassfest, HACS).
-**Κανόνες:** (1) αλλαγές στον κοινό πυρήνα → sync στο HA repo (hook + `tools/sync_ha.ps1`)· (2) μικρές διορθώσεις στο changelog = «Bug fixes / μικρές διορθώσεις»· (3) ελληνικά ΧΩΡΙΣ all-caps (το `text-transform: uppercase` κρατά τους τόνους) — πρώτο γράμμα κεφαλαίο μόνο· (4) κάθε αλλαγή UI → ξαναβγάζουμε τα screenshots (app: headless Edge με hash params, HA: Chrome στο ha.dosman.gr + zoom crop χωρίς πλαϊνό μενού).
+**Έγιναν (v1.3.0 app / v0.4.0 HA):** επιλογή χώρας (splash με σημαίες, ρυθμίσεις) και γλώσσας (ΕΛ/EN/DE, dropdown με σημαίες)· χώρες GR (Allwyn layout) και DE (επίσημο eurojackpot.com layout + «Πού κερδήθηκε» ανά χώρα/κρατίδιο, top-3 κατηγορίες)· οι άλλες χώρες δείχνουν «σύντομα» στη γλώσσα τους· τιμή στήλης ρυθμιζόμενη ανά χώρα (GR 2,50, DE 2,00 + προμήθεια)· πλαίσιο «Επόμενη κλήρωση» + αντίστροφη μέτρηση (και στο HA)· νέο εικονίδιο (αστέρι + €, σκούρο φόντο) στο app/exe/taskbar και στο HA brand· README.md (EL) + README.en.md (EN) στο app· seed v2 (με where-won).
+Κατάλογος χωρών/γλωσσών: `app/ui/countries.json` (+ `app/ui/flags`, `logo.svg`) → συγχρονίζεται στο HA (`tools/sync_ha_core.py` → `www/assets`).
+
+**Εκκρεμεί (HA docs):** τα README.md / README.en.md του HA repo είναι γραμμένα αλλά **δεν έχουν γίνει commit**· περιμένουν τα τελικά screenshots του πραγματικού HA: `03-dashboard-cards(.png/-en)`, `04-integration`, `05-device`, `06-service` (ελληνικά + `-en`). Τα panel screenshots (01/02/07/08, el+en) είναι έτοιμα (`/tmp`-free: `scratchpad/ha_shots.py`, harness `tools/preview` με `python -m http.server 8770`). Τα αγγλικά 04/05/06 είναι UI του ίδιου του HA → θέλουν προσωρινή αλλαγή γλώσσας προφίλ HA (ρώτα τον χρήστη). Μετά: commit docs στο HA repo (χωρίς νέο release).
+**Κανόνες:** (1) αλλαγές στον κοινό πυρήνα/κατάλογο → sync στο HA repo (hook + `tools/sync_ha.ps1`)· (2) μικρές διορθώσεις στο changelog = «Bug fixes / μικρές διορθώσεις»· (3) ελληνικά ΧΩΡΙΣ all-caps· (4) κάθε αλλαγή UI → ξαναβγάζουμε ΟΛΑ τα screenshots (ελληνικά + αγγλικά) και ενημερώνουμε README.md + README.en.md· (5) επιβεβαίωση χρήστη πριν επανεκκίνηση/εγκατάσταση στο HA· (6) το demo dashboard στο HA μένει (δεν το ξαναφτιάχνουμε).
 **HA ενημέρωση:** HACS update → επανεκκίνηση HA → Ctrl+F5 στον browser.
 
-**Εύρημα για Γερμανία:** η επίσημη (γερμανική) πηγή με `adg=ja` δίνει ανά κατηγορία `aufteilung[]` ΜΟΝΟ για τις 3 πρώτες κατηγορίες (5+2, 5+1, 5+0): πού κερδήθηκε, ανά χώρα (~14 χώρες φαίνονται στο ιστορικό, μαζί με την Ελλάδα `GRC`) και για Γερμανία ανά ομόσπονδο κρατίδιο. Για τις υπόλοιπες κατηγορίες υπάρχει μόνο σύνολο όλων των χωρών. Νικητές Γερμανίας ανά κατηγορία δεν υπάρχουν σε καμία πηγή. Ιδέα: ενότητα «Πού κερδήθηκε» στο app και στο HA (top-3 κατηγορίες, Ελλάδα και Γερμανία ξεχωριστά).
-
 **Επόμενα βήματα:**
-1. «Πού κερδήθηκε» (ανά χώρα/κρατίδιο, 3 πρώτες κατηγορίες) σε app + HA.
+1. Ολοκλήρωση HA: έγκριση → HACS update 0.4.0 → επανεκκίνηση → πραγματικά screenshots → commit README.
 2. **Mac έκδοση** (ζήτηση χρήστη): ίδιος κώδικας, pywebview/WKWebView, build με PyInstaller σε Mac ή GitHub Actions `macos-latest`.
-3. Splash screen πρώτης εκκίνησης με επιλογή γλώσσας και χώρας.
+3. Περισσότερες χώρες/γλώσσες (η υποδομή υπάρχει: `countries.json` + locale + layout στο `openDraw()`).
 4. Allwyn login/παιχνίδι (app + HA), μη υπογεγραμμένο exe (SmartScreen).
 
-Δοκιμή app: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q` (57).
-Release app: bump `app/version.py` + `CHANGELOG.md`, μετά `powershell -ExecutionPolicy Bypass -File build\release.ps1 -SkipSeed`.
-Dev DB με demo δελτία: `data\eurojackpot.db` (git-ignored, δεν μπαίνει στο exe).
+Δοκιμή app: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q` (60).
+Screenshots app: scratchpad `shots.py` (headless Edge + in-process dev server, hash params `#country=DE&lang=en&view=history&draw=...&menu=lang-dd&splash=1&hover=GR,PL`).
+Release app: bump `app/version.py` + `CHANGELOG.md`, μετά `powershell -ExecutionPolicy Bypass -File buildelease.ps1 -SkipSeed`.
 ## Done
 - [x] M1 skeleton, venv (.venv), deps
 - [x] M2 db.py, sources/official.py (998 draws 2012->2026-10-13 in ~28s), updater.py

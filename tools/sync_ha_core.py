@@ -29,6 +29,14 @@ def main(ha_repo: str) -> None:
     out = comp / "data" / "draws.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"version": 1, "draws": compact}, separators=(",", ":")), encoding="utf-8")
+    # country/language catalogue, flags and logo for the HA panel (served from www/assets)
+    assets = comp / "www" / "assets"
+    shutil.rmtree(assets, ignore_errors=True)
+    (assets / "flags").mkdir(parents=True)
+    shutil.copy(APP / "ui" / "countries.json", assets / "countries.json")
+    shutil.copy(APP / "ui" / "logo.svg", assets / "logo.svg")
+    for f in (APP / "ui" / "flags").iterdir():
+        shutil.copy(f, assets / "flags" / f.name)
     print(f"synced {len(CORE_FILES)} core files and {len(compact)} draws ({out.stat().st_size // 1024} KB) -> {comp}")
 
 
