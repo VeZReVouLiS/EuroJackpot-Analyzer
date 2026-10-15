@@ -1,21 +1,21 @@
 # Progress
 
 ## >>> ΠΟΥ ΕΧΟΥΜΕ ΜΕΙΝΕΙ (συνέχεια από το σπίτι) <<<
-Repo: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer (public). Τελευταίο release: **v1.1.2**.
+Repo: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer (public). Τελευταίο release: **v1.2.0**.
 
-**Έγινε στην 1.1.2:** fallback όταν το native παράθυρο (pywebview/pythonnet) δεν ξεκινά, π.χ. στο PC `dosma` με
-`Failed to resolve Python.Runtime.Loader.Initialize`: η εφαρμογή ανοίγει σε Edge app mode μέσω τοπικού server
-(token + έλεγχος Host), γράφει το σφάλμα στο `data\startup.log`, και κλείνει όταν κλείσει το παράθυρο.
-Διορθώθηκαν επίσης τα release notes (UTF-8) και οι οδηγίες (SmartScreen, Unblock).
+**Έγιναν:** v1.1.3 (αυτόματη αφαίρεση του «Mark of the Web» από τα αρχεία — αιτία του pythonnet σφάλματος στο PC `dosma`),
+v1.2.0 (ιστορικό δελτίων «Τα δελτία μου» + αυτόματος έλεγχος κερδών + σύνολα + ειδοποίηση + export/import δελτίων),
+README με οδηγίες και 7 εικόνες (docs/images, παράγονται με headless Edge και hash params: `#static=1&view=...&lang=...&theme=...&gen=N&draw=YYYY-MM-DD&demo_update=1`).
 
 **Επόμενα βήματα:**
-1. Δοκιμή της 1.1.2 στο PC `dosma` (και εκεί: Ρυθμίσεις → Έλεγχος σύνδεσης για το παλιό 403). Αν το fallback δεν ανοίξει, στείλε το `data\startup.log`.
-2. Splash screen πρώτης εκκίνησης με επιλογή γλώσσας και χώρας (ζήτηση χρήστη).
-3. Mac έκδοση, Allwyn login/παιχνίδι, Home Assistant (βλ. Future).
+1. Επιβεβαίωση στο PC `dosma`: φρέσκο κατέβασμα της 1.1.3+ ΧΩΡΙΣ Unblock πρέπει να ανοίγει native παράθυρο (αν όχι: `data\startup.log`). Δοκιμή «Εγκατάσταση και επανεκκίνηση» από την 1.1.2 → νεότερη.
+2. **Home Assistant** (ζήτηση χρήστη, όπως η Αττική Οδός): σχεδιασμός και υλοποίηση — αισθητήρες τελευταίας κλήρωσης/επόμενης κλήρωσης/jackpot/καθυστερούμενων αριθμών, αποτελέσματα δελτίων, ίσως παιχνίδι από HA.
+3. Splash screen πρώτης εκκίνησης με επιλογή γλώσσας και χώρας.
+4. Mac έκδοση, Allwyn login/παιχνίδι, μη υπογεγραμμένο exe (SmartScreen).
 
-**Σημείωση:** το exe δεν είναι υπογεγραμμένο, οπότε εμφανίζεται SmartScreen «Unknown publisher»· λύση μόνο με code-signing πιστοποιητικό.
-Δοκιμή: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q` (46).
+Δοκιμή: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q` (57).
 Release: bump `app/version.py` + `CHANGELOG.md`, μετά `powershell -ExecutionPolicy Bypass -File build\release.ps1 -SkipSeed`.
+Dev DB με demo δελτία: `data\eurojackpot.db` (git-ignored, δεν μπαίνει στο exe).
 ## Done
 - [x] M1 skeleton, venv (.venv), deps
 - [x] M2 db.py, sources/official.py (998 draws 2012->2026-10-13 in ~28s), updater.py
