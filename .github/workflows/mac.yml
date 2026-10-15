@@ -1,0 +1,58 @@
+name: macOS build
+
+# Builds the macOS app (Apple Silicon + Intel), tests it and attaches the zips to a GitHub release.
+#  - a release is published  -> the zips are added to that release
+#  - manual run with a tag    -> the zips are added to that existing release
+#  - push to main             -> build + tests only (artifacts, nothing published)
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to attach the build to (empty = build only)"
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths: ["app/**", "build/**", "tests/**", "requirements.txt", ".github/workflows/mac.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-latest, arch: arm64 }
+          - { os: macos-15-intel, arch: intel }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -r requirements.txt
+      - name: Tests
+        run: python -m pytest -q
+      - name: Build, sign (ad-hoc) and self-test the app
+        run: sh build/build_mac.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EuroJackpotApp-mac-${{ matrix.arch }}
+          path: |
+            dist/EuroJackpotApp-mac-${{ matrix.arch }}.zip
+            dist/EuroJackpotApp-mac-${{ matrix.arch }}.zip.sha256
+      - name: Attach to the release
+        if: github.event_name == 'release' || github.event.inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+        run: |
+          gh release upload "$TAG" \
+            "dist/EuroJackpotApp-mac-${{ matrix.arch }}.zip" \
+            "dist/EuroJackpotApp-mac-${{ matrix.arch }}.zip.sha256" \
+            --clobber --repo "${{ github.repository }}"

@@ -43,11 +43,13 @@ def _run_native(api: Api) -> None:
     api._bind(window)
     storage = data_dir() / "webview"
     storage.mkdir(exist_ok=True)
-    webview.start(storage_path=str(storage), private_mode=False, debug="--debug" in sys.argv,
-                  icon=str(resource_dir() / "ui" / "icon.ico"))
+    extra = {"icon": str(resource_dir() / "ui" / "icon.ico")} if sys.platform == "win32" else {}
+    webview.start(storage_path=str(storage), private_mode=False, debug="--debug" in sys.argv, **extra)
 
 
 def _find_browser() -> str | None:
+    if sys.platform != "win32":
+        return None                                   # no Edge app mode outside Windows: use the default browser
     roots = [os.environ.get(k) for k in ("ProgramFiles(x86)", "ProgramFiles", "LocalAppData")]
     rel = [r"Microsoft\Edge\Application\msedge.exe", r"Google\Chrome\Application\chrome.exe"]
     for r in rel:
@@ -71,7 +73,34 @@ def _run_browser(api: Api) -> None:
     server.stop()
 
 
+def selftest() -> int:
+    """Start everything except the window (used by the macOS build to prove the bundle works)."""
+    import tempfile
+
+    import webview
+
+    from . import version
+
+    with tempfile.TemporaryDirectory() as tmp:
+        db = Database(Path(tmp) / "selftest.db")
+        api = Api(db)
+        state = api.get_state()
+        assert state["count"] > 0 and api.get_locale("de")["nav.history"], "bundled data/locales missing"
+        assert api.get_countries()["countries"], "countries.json missing"
+        db.close()
+    try:
+        from importlib.metadata import version as dist_version
+
+        wv = dist_version("pywebview")
+    except Exception:
+        wv = "?"
+    print(f"selftest ok: app {version.__version__}, {state['count']} draws, pywebview {wv}, window module {webview.__name__}")
+    return 0
+
+
 def main() -> None:
+    if "--selftest" in sys.argv:
+        sys.exit(selftest())
     db = Database()
     api = Api(db)
     try:

@@ -3,7 +3,8 @@
 Release layout expected on GitHub:
     tag  vX.Y.Z
     asset EuroJackpotApp-portable-win.zip          (folder EuroJackpotApp/ with the exe)
-    asset EuroJackpotApp-portable-win.zip.sha256   ("<hex>  <filename>")
+    asset EuroJackpotApp-mac-arm64.zip / EuroJackpotApp-mac-intel.zip   (the .app, made with `ditto -c -k --keepParent`)
+    asset <zip>.sha256                             ("<hex>  <filename>")
 The install is refused unless the SHA-256 of the downloaded zip matches.
 """
 from __future__ import annotations
@@ -21,7 +22,7 @@ import zipfile
 from pathlib import Path
 
 from . import version
-from .paths import base_dir
+from .paths import app_bundle, base_dir, is_mac_app
 
 API = "https://api.github.com/repos/{repo}/releases/latest"
 UA = f"EuroJackpotAnalyzer/{version.__version__}"
@@ -81,9 +82,46 @@ def check(repo: str | None = None) -> dict:
     tag = rel.get("tag_name", "")
     zip_url, sha_url = pick_assets(rel, repo)
     res.update(latest=tag.lstrip("v"), newer=is_newer(tag, version.__version__), notes=rel.get("body") or "",
-               url=rel.get("html_url"), installable=bool(zip_url and sha_url and getattr(sys, "frozen", False)),
+               url=rel.get("html_url"), installable=bool(zip_url and sha_url and can_install()),
                zip_url=zip_url, sha_url=sha_url)
     return res
+
+
+def can_install() -> bool:
+    """In-app install works for the packaged app; on macOS only when the .app can be replaced (writable folder)."""
+    if not getattr(sys, "frozen", False):
+        return False
+    if is_mac_app():
+        bundle = app_bundle()
+        return bool(bundle and bundle.suffix == ".app" and os.access(bundle.parent, os.W_OK))
+    return True
+
+
+def extract_mac(zip_path: Path, dest: Path) -> Path:
+    """Unpack a macOS app zip with ditto (keeps symlinks and permissions; Python's zipfile would not)."""
+    dest.mkdir(parents=True, exist_ok=True)
+    subprocess.run(["/usr/bin/ditto", "-x", "-k", str(zip_path), str(dest)], check=True, capture_output=True)
+    apps = [p for p in dest.iterdir() if p.suffix == ".app" and p.is_dir()]
+    if len(apps) != 1:
+        raise AppUpdateError("archive does not contain exactly one .app")
+    return apps[0]
+
+
+APPLY_SH = """#!/bin/sh
+# usage: apply.sh <pid> <new .app> <installed .app>
+while kill -0 "$1" 2>/dev/null; do sleep 0.5; done
+sleep 1
+rm -rf "$3.old"
+mv "$3" "$3.old" || exit 1
+if ditto "$2" "$3"; then
+  rm -rf "$3.old"
+  xattr -dr com.apple.quarantine "$3" 2>/dev/null
+else
+  rm -rf "$3"
+  mv "$3.old" "$3"
+fi
+open "$3"
+"""
 
 
 def expected_sha256(text: str) -> str:
@@ -129,8 +167,8 @@ Stop-Transcript | Out-Null
 
 def install(release: dict, progress=None) -> None:
     """Download, verify and schedule the replacement of the running app (frozen builds only)."""
-    if not getattr(sys, "frozen", False):
-        raise AppUpdateError("in-app install works only in the packaged exe")
+    if not can_install():
+        raise AppUpdateError("in-app install works only in the packaged app (with a writable install folder)")
     zip_url, sha_url = release.get("zip_url"), release.get("sha_url")
     if not zip_url or not sha_url:
         raise AppUpdateError("release has no installable package")
@@ -149,11 +187,18 @@ def install(release: dict, progress=None) -> None:
                     progress(done, total)
         if sha256_file(pkg) != want:
             raise AppUpdateError("checksum mismatch - download discarded")
-        src = safe_extract(pkg, tmp / "new")
+        src = extract_mac(pkg, tmp / "new") if is_mac_app() else safe_extract(pkg, tmp / "new")
     except AppUpdateError:
         raise
     except Exception as e:
         raise AppUpdateError(f"{type(e).__name__}: {getattr(e, 'reason', e)}") from e
+    if is_mac_app():
+        script = tmp / "apply.sh"
+        script.write_text(APPLY_SH, encoding="utf-8")
+        log = open(tmp / "apply.log", "w")
+        subprocess.Popen(["/bin/sh", str(script), str(os.getpid()), str(src), str(app_bundle())],
+                         stdout=log, stderr=log, start_new_session=True, close_fds=True)
+        return
     ps1 = tmp / "apply.ps1"
     ps1.write_text(APPLY_PS1, encoding="utf-8")
     exe = Path(sys.executable).resolve()
