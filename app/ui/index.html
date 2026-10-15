@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EuroJackpot Analyzer</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand"><span class="logo">★</span><span class="brand-text" data-i18n="app.title">EuroJackpot Analyzer</span></div>
+    <nav id="nav">
+      <button data-view="stats" class="nav-btn active"><span class="ico">📊</span><span data-i18n="nav.stats"></span></button>
+      <button data-view="ticket" class="nav-btn"><span class="ico">🎟️</span><span data-i18n="nav.ticket"></span></button>
+      <button data-view="history" class="nav-btn"><span class="ico">🗓️</span><span data-i18n="nav.history"></span></button>
+      <button data-view="settings" class="nav-btn"><span class="ico">⚙️</span><span data-i18n="nav.settings"></span></button>
+    </nav>
+    <div class="side-foot">
+      <div class="muted small"><span data-i18n="top.updated"></span>:</div>
+      <div id="last-update" class="small strong">—</div>
+      <div id="draw-count" class="muted small"></div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <header id="topbar">
+      <div id="status" class="status"></div>
+      <div class="top-actions">
+        <button id="btn-update" class="btn ghost" data-i18n="top.update"></button>
+        <button id="btn-lang" class="btn ghost" title="Language">EL</button>
+        <button id="btn-theme" class="btn ghost" title="Theme">🌙</button>
+        <button id="btn-full" class="btn ghost" title="Full screen">⛶</button>
+      </div>
+    </header>
+
+    <section id="view-stats" class="view active"></section>
+    <section id="view-ticket" class="view"></section>
+    <section id="view-history" class="view"></section>
+    <section id="view-settings" class="view"></section>
+  </main>
+</div>
+
+<div id="overlay" class="overlay hidden">
+  <div class="modal card">
+    <h2 id="ov-title"></h2>
+    <p id="ov-text" class="muted"></p>
+    <div class="progress"><div id="ov-bar" class="bar"></div></div>
+    <div id="ov-pct" class="strong big">0%</div>
+    <button id="ov-btn" class="btn primary"></button>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
