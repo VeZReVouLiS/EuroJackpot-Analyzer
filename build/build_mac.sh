@@ -13,7 +13,8 @@ VERSION=$(.venv/bin/python -c "from app.version import __version__ as v; print(v
     --add-data "$PWD/app/ui:app/ui" --add-data "$PWD/app/locales:app/locales" --add-data "$PWD/app/seed:app/seed" \
     --collect-submodules webview --paths "$PWD" run.py
 APP="dist/$NAME.app"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" -c "Set :CFBundleVersion $VERSION" "$APP/Contents/Info.plist"
+plutil -replace CFBundleShortVersionString -string "$VERSION" "$APP/Contents/Info.plist"
+plutil -replace CFBundleVersion -string "$VERSION" "$APP/Contents/Info.plist"
 # ad-hoc signature (required to run on Apple Silicon; not a paid Developer ID, so Gatekeeper still asks on first launch)
 codesign --force --deep --sign - "$APP"
 "$APP/Contents/MacOS/$NAME" --selftest

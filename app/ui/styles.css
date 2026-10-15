@@ -249,3 +249,7 @@ td.num { white-space: nowrap; }
 .detail-box { overflow-x: hidden; }
 .detail-box th, .detail-box td { padding: .55rem .45rem; }
 .detail-box th { vertical-align: bottom; line-height: 1.2; }
+/* draw details: all seven balls on one row, also in a narrow window */
+.dtl-head .balls { flex-wrap: nowrap; gap: min(.5rem, 1vw); }
+.dtl-head .ball.lg { width: min(4rem, 11vw); height: min(4rem, 11vw); font-size: min(1.7rem, 4.6vw); }
+.dtl-head .sep { width: min(.5rem, 1vw); }
