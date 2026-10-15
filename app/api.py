@@ -8,7 +8,7 @@ import traceback
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import appupdate, evaluation, exporter, generators, rules, stats, updater, version
+from . import appupdate, countries, evaluation, exporter, generators, rules, stats, updater, version
 from .db import Database
 from .paths import resource_dir
 from .sources import allwyn, importer, official
@@ -16,6 +16,8 @@ from .updater import UpdateError
 
 DEFAULT_SETTINGS = {
     "lang": "el",
+    "country": "",                # chosen on the splash screen ("" = not chosen yet)
+    "prices": {},                 # price per column the user set, by country code
     "theme": "dark",
     "auto_update": True,          # download new draws when the app starts
     "check_app_updates": True,    # look for a new app version (GitHub) when the app starts
@@ -81,9 +83,12 @@ class Api:
             return s
 
     def get_locale(self, lang: str) -> dict:
-        name = lang if lang in ("el", "en") else "en"
+        name = lang if lang in countries.LANGUAGES else "en"
         path = resource_dir() / "locales" / f"{name}.json"
         return json.loads(path.read_text(encoding="utf-8"))
+
+    def get_countries(self) -> dict:
+        return countries.catalogue()
 
     # state ------------------------------------------------------------
     def get_state(self) -> dict:
@@ -93,7 +98,8 @@ class Api:
             "last_update": self._db.get_meta("last_update"),
             "seed": self._seed_info,
             "settings": self.get_settings(),
-            "price": rules.COLUMN_PRICE,
+            "price": countries.effective_price(self.get_settings()),
+            "default_price": countries.default_price(self.get_settings().get("country")),
             "max_columns": rules.MAX_COLUMNS,
             "algos": generators.ALGOS,
             "euro_max": rules.current_euro_max(),
@@ -202,7 +208,8 @@ class Api:
         if not s["n_draws"]:
             raise ValueError("no data")
         keep = [k if k else None for k in (keep or [])]
-        t = generators.generate_ticket(s, int(columns), algo, keep=keep)
+        t = generators.generate_ticket(s, int(columns), algo, keep=keep,
+                                       price=countries.effective_price(self.get_settings()))
         existing = self._db.get_ticket(int(ticket_id)) if ticket_id else None
         if existing and not existing["played"] and not existing["result"]:
             target = target_date or existing["target_date"]

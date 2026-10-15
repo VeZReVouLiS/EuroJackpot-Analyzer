@@ -11,9 +11,24 @@ from .http import SourceError, get_json
 
 URL = (
     "https://www.eurojackpot.com/wlinfo/WL_InfoService"
-    "?client=jsn&gruppe=ZahlenUndQuoten&spielart=EJ&datum={d}"
+    "?client=jsn&gruppe=ZahlenUndQuoten&spielart=EJ&adg=ja&datum={d}"
 )
+DETAILS_VERSION = 2     # 2 = adds "where" (winners per country / German state) to the top classes
 REFERER = "https://www.eurojackpot.com/"
+
+
+def _where(aufteilung) -> list[dict]:
+    """Where the winners of a class are: [{"alpha3","code","winners","region"?}] (Germany is split by state)."""
+    out = []
+    for a in aufteilung or []:
+        try:
+            item = {"alpha3": str(a["landAlpha3"]), "code": str(a.get("kuerzel") or ""), "winners": int(a["anzahl"])}
+        except (KeyError, TypeError, ValueError):
+            continue
+        if a.get("provinz"):
+            item["region"] = str(a["provinz"])
+        out.append(item)
+    return out
 
 
 def _details(payload: dict) -> dict | None:
@@ -25,20 +40,24 @@ def _details(payload: dict) -> dict | None:
     classes = []
     for r in rows:
         try:
-            classes.append({
+            cls = {
                 "cls": int(r["klasse"]),
                 "tier": str(r.get("kurzbeschreibung", "")).replace(" ", ""),
                 "winners": int(r.get("anzahl") or 0),
                 "prize": float(r.get("quote") or 0.0),
-            })
+            }
         except (KeyError, TypeError, ValueError):
             continue
+        where = _where(r.get("aufteilung"))
+        if where:                       # only the first three classes have it
+            cls["where"] = where
+        classes.append(cls)
     stake = None
     try:
         stake = float(payload["auswertung"]["spieleinsatz"]["hauptlotterie"])
     except (KeyError, TypeError, ValueError):
         pass
-    return {"classes": classes, "stake_all": stake} if classes else None
+    return {"v": DETAILS_VERSION, "classes": classes, "stake_all": stake} if classes else None
 
 
 def parse(payload: dict) -> dict | None:

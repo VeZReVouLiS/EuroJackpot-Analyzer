@@ -106,9 +106,12 @@ class Database:
         with self._lock:
             return {r[0] for r in self._conn.execute("SELECT draw_date FROM draws")}
 
-    def dates_missing_details(self) -> set[str]:
+    def dates_missing_details(self, version: int = 0) -> set[str]:
+        """Draws without prize details, or with details older than `version`."""
         with self._lock:
-            return {r[0] for r in self._conn.execute("SELECT draw_date FROM draws WHERE details IS NULL")}
+            return {r[0] for r in self._conn.execute(
+                "SELECT draw_date FROM draws WHERE details IS NULL "
+                "OR COALESCE(json_extract(details, '$.v'), 0) < ?", (version,))}
 
     def delete_after(self, date_str: str) -> None:
         with self._tx() as c:

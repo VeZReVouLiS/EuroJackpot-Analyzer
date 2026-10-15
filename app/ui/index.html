@@ -4,12 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>EuroJackpot Analyzer</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div id="app">
   <aside id="sidebar">
-    <div class="brand"><span class="logo">★</span><span class="brand-text" data-i18n="app.title">EuroJackpot Analyzer</span></div>
+    <div class="brand"><span class="logo"><img src="logo.svg" alt=""></span><span class="brand-text" data-i18n="app.title">EuroJackpot Analyzer</span></div>
     <nav id="nav">
       <button data-view="stats" class="nav-btn active"><span class="ico">📊</span><span data-i18n="nav.stats"></span></button>
       <button data-view="ticket" class="nav-btn"><span class="ico">🎟️</span><span data-i18n="nav.ticket"></span></button>
@@ -31,7 +32,7 @@
       <div id="status" class="status"></div>
       <div class="top-actions">
         <button id="btn-update" class="btn ghost" data-i18n="top.update"></button>
-        <button id="btn-lang" class="btn ghost" title="Language">EL</button>
+        <div id="lang-dd"></div>
         <button id="btn-theme" class="btn ghost" title="Theme">🌙</button>
         <button id="btn-full" class="btn ghost" title="Full screen">⛶</button>
       </div>
@@ -59,6 +60,7 @@
   <div class="modal card detail-box"><button id="detail-close" class="btn ghost close-x" aria-label="close">✕</button><div id="detail-body"></div></div>
 </div>
 
+<div id="splash" class="splash hidden"></div>
 <div id="toast" class="toast hidden"></div>
 <script src="vendor/chart.umd.min.js"></script>
 <script src="app.js"></script>

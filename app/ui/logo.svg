@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="34 74 185 110"><defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a3a55"/><stop offset="1" stop-color="#0d1328"/></linearGradient>
+  <linearGradient id="st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#d9962b"/></linearGradient>
+  <linearGradient id="eu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ccbff"/><stop offset="1" stop-color="#1d78e6"/></linearGradient>
+</defs><g transform="translate(26,19) scale(.85)">
+  <polygon points="57.9,70.6 79.1,103.3 118.1,102.6 93.6,132.9 106.3,169.7 69.9,155.7 38.8,179.2 40.8,140.3 8.9,117.9 46.5,107.9" fill="url(#st)" stroke="#fff3c4" stroke-opacity=".35" stroke-width="2" stroke-linejoin="round"/>
+  <g fill="none" stroke="url(#eu)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 200 94 A 48 48 0 1 0 200 162" stroke-width="20"/>
+    <path d="M 124 117 H 180 M 124 140 H 174" stroke-width="12"/>
+  </g>
+</g></svg>

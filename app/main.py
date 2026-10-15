@@ -43,7 +43,8 @@ def _run_native(api: Api) -> None:
     api._bind(window)
     storage = data_dir() / "webview"
     storage.mkdir(exist_ok=True)
-    webview.start(storage_path=str(storage), private_mode=False, debug="--debug" in sys.argv)
+    webview.start(storage_path=str(storage), private_mode=False, debug="--debug" in sys.argv,
+                  icon=str(resource_dir() / "ui" / "icon.ico"))
 
 
 def _find_browser() -> str | None:

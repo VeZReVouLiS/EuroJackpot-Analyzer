@@ -33,7 +33,9 @@ const tr = (k, vars = {}) => (S.t[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const fmtDate = iso => { if (!iso) return "—"; const [y, m, d] = iso.slice(0, 10).split("-"); return `${d}/${m}/${y}`; };
 const fmtDT = iso => iso ? `${fmtDate(iso)} ${iso.slice(11, 16)}` : tr("top.never");
-const money = n => n.toLocaleString(S.settings.lang === "el" ? "el-GR" : "en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+const LOC = { el: "el-GR", en: "en-GB", de: "de-DE" };
+const loc = () => LOC[S.settings.lang] || "en-GB";
+const money = n => n.toLocaleString(loc(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const ball = (n, cls = "") => `<span class="ball ${cls}">${n}</span>`;
 const balls = (d, cls = "") => `<div class="balls">${d.main.map(n => ball(n, cls)).join("")}<span class="sep"></span>${d.euro.map(n => ball(n, "euro " + cls)).join("")}</div>`;
@@ -55,7 +57,7 @@ async function loadLocale() {
   S.t = await call("get_locale", S.settings.lang);
   document.documentElement.lang = S.settings.lang;
   $$("[data-i18n]").forEach(el => el.textContent = tr(el.dataset.i18n));
-  $("#btn-lang").textContent = S.settings.lang.toUpperCase();
+  renderLangButton();
   document.title = tr("app.title");
   renderStatus();
 }
@@ -64,6 +66,99 @@ function applyTheme() {
   $("#btn-theme").textContent = S.settings.theme === "dark" ? "🌙" : "☀️";
 }
 async function setSetting(k, v) { S.settings = await call("set_setting", k, v); }
+
+/* ---------- countries, languages, flag dropdowns ---------- */
+const flagImg = f => `<img class="flag-ico" src="flags/${f}.svg" alt="">`;
+const country = () => (S.cat ? S.cat.countries.find(c => c.code === S.settings.country && c.supported) : null);
+const cname = (c, lang) => c.name[lang] || c.name.en;
+// Generic dropdown. items: [{value, flag, label, sub, disabled}]. `btnHtml(item)` renders the closed button.
+function dropdown(host, items, value, onpick, { align = "left", btnHtml } = {}) {
+  const cur = items.find(i => i.value === value) || items[0];
+  host.classList.add("dd");
+  host.innerHTML = `<button type="button" class="dd-btn">${btnHtml ? btnHtml(cur) : `${flagImg(cur.flag)}<span>${esc(cur.label)}</span><i class="caret">▾</i>`}</button>
+    <div class="dd-menu ${align}">${items.map(i => `<button type="button" class="dd-item ${i.value === value ? "active" : ""} ${i.disabled ? "disabled" : ""}" data-v="${esc(i.value)}">${flagImg(i.flag)}<span>${esc(i.label)}</span>${i.sub ? `<em>${esc(i.sub)}</em>` : ""}</button>`).join("")}</div>`;
+  const btn = $(".dd-btn", host), menu = $(".dd-menu", host);
+  btn.onclick = e => { e.stopPropagation(); const open = menu.classList.contains("open"); closeDropdowns(); menu.classList.toggle("open", !open); };
+  $$(".dd-item", host).forEach(b => b.onclick = e => { e.stopPropagation(); closeDropdowns(); if (!b.classList.contains("disabled")) onpick(b.dataset.v); });
+}
+const closeDropdowns = () => $$(".dd-menu.open").forEach(m => m.classList.remove("open"));
+const langItems = () => Object.entries(S.cat.languages).map(([k, l]) => ({ value: k, flag: l.flag, label: l.name }));
+const countryItems = () => S.cat.countries.map(c => ({ value: c.code, flag: c.flag, label: c.name.own, sub: c.supported ? "" : c.soon, disabled: !c.supported }));
+async function changeLanguage(lang) {
+  await setSetting("lang", lang); await loadLocale(); await refreshInfo(); renderAll();
+}
+function renderLangButton() {
+  const host = $("#lang-dd"); if (!host || !S.cat) return;
+  dropdown(host, langItems(), S.settings.lang, changeLanguage, { align: "right",
+    btnHtml: i => `${flagImg(i.flag)}<span>${esc(S.cat.languages[i.value].code)}</span><i class="caret">▾</i>` });
+}
+
+/* ---------- splash: choose country, then language ---------- */
+async function showSplash() {
+  const t = await call("get_locale", "en");     // before a country is chosen nothing says which language to use
+  const sp = $("#splash"); sp.classList.remove("hidden");
+  const stepCountry = () => {
+    sp.innerHTML = `<div class="splash-frame"><div class="splash-head"><h1>${t["splash.title"]}</h1><p>${t["splash.sub"]}</p></div>
+      <div class="flags">${S.cat.countries.map(c => `<button class="flag-tile ${c.supported ? "" : "soon"}" data-c="${c.code}" aria-label="${esc(c.name.en)}">
+        <img src="flags/${c.flag}.svg" alt=""><span class="flag-name">${esc(c.name.own)}</span>
+        ${c.supported ? "" : `<span class="flag-soon">${esc(c.soon)}</span>`}</button>`).join("")}</div></div>`;
+    (new URLSearchParams(location.hash.slice(1)).get("hover") || "").split(",").forEach(code => { const t = $(`.flag-tile[data-c="${code}"]`, sp); if (t) t.classList.add("hover"); });   // docs: show the hover state
+    $$(".flag-tile", sp).forEach(b => b.onclick = () => { const c = S.cat.countries.find(x => x.code === b.dataset.c); if (c.supported) stepLang(c); });
+  };
+  const stepLang = c => {
+    const opts = [...new Set([c.local_lang, "en"])];
+    sp.innerHTML = `<div class="splash-frame"><div class="splash-head"><h1>${t["splash.lang_title"]}</h1><p>${t["splash.lang_sub"]}</p></div>
+      <div class="lang-tiles">${opts.map(k => { const l = S.cat.languages[k]; return `<button class="lang-tile" data-l="${k}"><img src="flags/${l.flag}.svg" alt=""><b>${esc(l.name)}</b></button>`; }).join("")}</div>
+      <div class="splash-foot"><button class="btn ghost" id="sp-back">${t["splash.back"]}</button></div></div>`;
+    $("#sp-back", sp).onclick = stepCountry;
+    $$(".lang-tile", sp).forEach(b => b.onclick = async () => {
+      await setSetting("country", c.code); await setSetting("lang", b.dataset.l);
+      sp.classList.add("hidden"); sp.innerHTML = "";
+      await loadLocale(); await refreshInfo(); S.splashDone(); });
+  };
+  stepCountry();
+  await new Promise(res => { S.splashDone = res; });
+}
+
+/* ---------- next draw box with countdown ---------- */
+function tzOffset(ms, tz) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(new Date(ms)).map(x => [x.type, x.value]));
+  return Date.UTC(+p.year, p.month - 1, +p.day, +p.hour, +p.minute, +p.second) - ms;
+}
+function zonedInstant(y, m, d, hh, mm, tz) {
+  const wall = Date.UTC(y, m - 1, d, hh, mm);
+  let ms = wall - tzOffset(wall, tz);
+  ms = wall - tzOffset(ms, tz);
+  return ms;
+}
+function nextDraw(c) {           // Friday, plus Tuesday since 2022-03-29; draw time and zone are the country's
+  const tz = c.tz || "Europe/Athens", [hh, mm] = (c.draw || "21:00").split(":").map(Number), now = Date.now();
+  const base = new Date(); base.setUTCDate(base.getUTCDate() - 1);
+  for (let i = 0; i < 14; i++) {
+    const dt = new Date(base.getTime() + i * 864e5), y = dt.getUTCFullYear(), m = dt.getUTCMonth() + 1, d = dt.getUTCDate(), wd = dt.getUTCDay();
+    if (!(wd === 5 || (wd === 2 && Date.UTC(y, m - 1, d) >= Date.UTC(2022, 2, 29)))) continue;
+    const at = zonedInstant(y, m, d, hh, mm, tz);
+    if (at > now) return { at, iso: `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`, time: c.draw || "21:00" };
+  }
+  return null;
+}
+function nextDrawBox() {
+  const c = country(); if (!c) return "";
+  const n = nextDraw(c); if (!n) return "";
+  S.nextAt = n.at;
+  const cell = u => `<div class="cd-cell"><b id="cd-${u}">00</b><span>${tr("next." + u)}</span></div>`;
+  return `<div class="card next-box"><div class="next-title">⏱ ${tr("next.title")} <b>${fmtDate(n.iso)} - ${n.time}</b></div>
+    <div class="countdown">${cell("d")}<i>:</i>${cell("h")}<i>:</i>${cell("m")}<i>:</i>${cell("s")}</div></div>`;
+}
+function tickCountdown() {
+  if (!$("#cd-d")) { clearInterval(S.cd); S.cd = null; return; }
+  const left = Math.max(0, Math.floor((S.nextAt - Date.now()) / 1000));
+  const parts = { d: Math.floor(left / 86400), h: Math.floor(left % 86400 / 3600), m: Math.floor(left % 3600 / 60), s: left % 60 };
+  for (const k in parts) $("#cd-" + k).textContent = String(parts[k]).padStart(2, "0");
+  if (left === 0 && S.view === "history") renderHistory();       // draw time reached: pick the following draw
+}
+function startCountdown() { clearInterval(S.cd); tickCountdown(); S.cd = setInterval(tickCountdown, 1000); }
 
 /* ---------- state / update ---------- */
 async function refreshInfo() {
@@ -126,7 +221,7 @@ async function runUpdate({ firstRun = false } = {}) {
 
 /* ---------- navigation ---------- */
 function showView(v) {
-  S.view = v;
+  S.view = v; closeDropdowns();
   $$(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === v));
   $$(".view").forEach(s => s.classList.toggle("active", s.id === "view-" + v));
   if (v === "stats") renderStats(); else if (v === "ticket") renderTicket(); else if (v === "mytickets") renderMyTickets();
@@ -187,27 +282,52 @@ async function runDiagnostics(box) {
 }
 
 /* ---------- draw details (winners / prizes) ---------- */
-const nf = n => (n ?? 0).toLocaleString(S.settings.lang === "el" ? "el-GR" : "en-GB");
+const nf = n => (n ?? 0).toLocaleString(loc());
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
+const matchText = tier => { const [m, e] = tier.split("+").map(Number);
+  return [tr(m === 1 ? "detail.m1" : "detail.mN", { m }), e ? tr(e === 1 ? "detail.e1" : "detail.eN", { e }) : ""].filter(Boolean).join(" + "); };
+function whereHtml(cls) {
+  const lang = S.settings.lang, byA3 = Object.fromEntries(S.cat.countries.map(c => [c.alpha3, c]));
+  const blocks = cls.map((c, i) => c.where && c.where.length ? { c, i } : null).filter(Boolean).map(({ c, i }) => {
+    const items = [...c.where].sort((a, b) => b.winners - a.winners).map(w => {
+      const cc = byA3[w.alpha3];
+      const st = w.region && S.cat.german_states[w.region];
+      const label = w.region ? (st ? st[lang] || st.en : w.region) : (cc ? cname(cc, lang) : w.code || w.alpha3);
+      return `<span class="where-chip">${cc ? flagImg(cc.flag) : ""}${esc(label)} <b>${nf(w.winners)}×</b></span>`;
+    }).join("");
+    return `<div class="where-row"><div class="where-cls"><b>${ROMAN[i]}</b> <span class="muted small">${esc(matchText(c.tier))}</span></div><div class="where-chips">${items}</div></div>`;
+  });
+  return blocks.length ? `<h3 style="margin:1.2rem 0 .6rem">${tr("detail.where")}</h3>${blocks.join("")}<div class="note">${tr("detail.where_hint")}</div>` : "";
+}
 async function openDraw(dateStr) {
   const d = await call("get_draw", dateStr);
   if (!d) return;
-  const det = d.details, cls = det ? det.classes : [];
-  const hasGr = cls.some(c => c.winners_gr != null);
-  const rows = cls.map(c => {
-    const other = (c.winners_gr != null && !c.greek_only) ? c.winners - c.winners_gr : null;
-    const prize = c.prize > 0 ? money(c.prize) : `<span class="muted">${c.winners ? "—" : tr("detail.no_winner")}</span>`;
-    return `<tr class="${c.winners_gr > 0 ? "gr-win" : ""}"><td><b>${esc(c.tier.replace("+", " + "))}</b>${c.greek_only ? `<span class="tag-gr">${tr("detail.greek_only")}</span>` : ""}</td>
-      <td class="num">${c.greek_only ? "—" : nf(c.winners)}</td>
-      <td class="num">${c.winners_gr != null ? nf(c.winners_gr) : "—"}</td>
-      <td class="num">${other != null ? nf(other) : "—"}</td><td class="num">${prize}</td></tr>`;
-  }).join("");
+  const det = d.details, cls = det ? det.classes : [], c = country(), official = c && c.layout === "official";
+  const hasGr = cls.some(x => x.winners_gr != null);
   const kpi = (l, v) => v != null ? `<div class="kpi"><span class="muted small">${l}</span><b>${v}</b></div>` : "";
+  let table = "";
+  if (det && official) {         // as on the official eurojackpot.com page: class, match, winners, prize
+    const rows = cls.filter(x => !x.greek_only).map((x, i) => `<tr><td><b>${ROMAN[i]}</b></td><td>${esc(matchText(x.tier))}</td>
+      <td class="num">${x.winners ? nf(x.winners) + " ×" : `<span class="muted">${tr("detail.no_winner")}</span>`}</td>
+      <td class="num">${x.prize > 0 ? money(x.prize) : `<span class="muted">—</span>`}</td></tr>`).join("");
+    table = `<table><thead><tr><th>${tr("detail.class")}</th><th>${tr("detail.match")}</th><th class="num">${tr("detail.winners")}</th><th class="num">${tr("detail.prize")}</th></tr></thead><tbody>${rows}</tbody></table>`;
+  } else if (det) {              // Greek (Allwyn) layout: all countries / Greece / others
+    const rows = cls.map(x => {
+      const other = (x.winners_gr != null && !x.greek_only) ? x.winners - x.winners_gr : null;
+      const prize = x.prize > 0 ? money(x.prize) : `<span class="muted">${x.winners ? "—" : tr("detail.no_winner")}</span>`;
+      return `<tr class="${x.winners_gr > 0 ? "gr-win" : ""}"><td><b>${esc(x.tier.replace("+", " + "))}</b>${x.greek_only ? `<span class="tag-gr">${tr("detail.greek_only")}</span>` : ""}</td>
+        <td class="num">${x.greek_only ? "—" : nf(x.winners)}</td>
+        <td class="num">${x.winners_gr != null ? nf(x.winners_gr) : "—"}</td>
+        <td class="num">${other != null ? nf(other) : "—"}</td><td class="num">${prize}</td></tr>`;
+    }).join("");
+    table = `<table><thead><tr><th>${tr("detail.tier")}</th><th class="num">${tr("detail.winners_all")}</th><th class="num">${tr("detail.winners_gr")}</th><th class="num">${tr("detail.winners_other")}</th><th class="num">${tr("detail.prize")}</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
   $("#detail-body").innerHTML = `
     <div class="dtl-head"><div><h2>${tr("detail.title")} · ${fmtDate(d.date)}${det && det.draw_no ? ` <span class="muted small">(${tr("detail.no", { n: det.draw_no })})</span>` : ""}</h2>
       ${balls(d, "lg")}</div></div>
-    ${det ? `<div class="kpis">${kpi(tr("detail.columns_all"), det.columns_all ? nf(det.columns_all) : null)}${kpi(tr("detail.columns_gr"), det.columns_gr ? nf(det.columns_gr) : null)}${kpi(tr("detail.stake"), det.stake_all ? money(det.stake_all) : null)}</div>
-    <table><thead><tr><th>${tr("detail.tier")}</th><th class="num">${tr("detail.winners_all")}</th><th class="num">${tr("detail.winners_gr")}</th><th class="num">${tr("detail.winners_other")}</th><th class="num">${tr("detail.prize")}</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="note">${tr("detail.no_country")}${hasGr ? "" : " " + tr("detail.no_greek", { d: "08/03/2024" })}</div>`
+    ${det ? `<div class="kpis">${kpi(tr("detail.columns_all"), det.columns_all ? nf(det.columns_all) : null)}${official ? "" : kpi(tr("detail.columns_gr"), det.columns_gr ? nf(det.columns_gr) : null)}${kpi(tr("detail.stake"), det.stake_all ? money(det.stake_all) : null)}</div>
+    ${table}${whereHtml(cls)}
+    ${official ? "" : `<div class="note">${tr("detail.no_country")}${hasGr ? "" : " " + tr("detail.no_greek", { d: "08/03/2024" })}</div>`}`
       : `<div class="empty">${tr("detail.no_details")}</div>`}`;
   $("#detail").classList.remove("hidden");
 }
@@ -327,7 +447,7 @@ async function generate(keep) {
     drawTicket();
   } catch (e) { toast(e.message || String(e)); }
 }
-const fmtDay = iso => { const d = new Date(iso + "T12:00:00"); return d.toLocaleDateString(S.settings.lang === "el" ? "el-GR" : "en-GB", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }); };
+const fmtDay = iso => { const d = new Date(iso + "T12:00:00"); return d.toLocaleDateString(loc(), { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" }); };
 function drawTicket() {
   const out = $("#ticket-out"); if (!out) return;
   const tk = S.ticket;
@@ -414,10 +534,11 @@ async function renderHistory() {
   const view = $("#view-history");
   if (!S.info.count) { renderEmpty(view); return; }
   const rows = await call("get_draws", 100);
-  view.innerHTML = `<h1>${tr("history.title")}</h1><div class="muted small" style="margin:-.6rem 0 .8rem">🔍 ${tr("detail.title")}…</div><div class="card"><table>
+  view.innerHTML = `${nextDrawBox()}<h1>${tr("history.title")}</h1><div class="muted small" style="margin:-.6rem 0 .8rem">🔍 ${tr("detail.title")}…</div><div class="card"><table>
     <thead><tr><th>${tr("history.date")}</th><th>${tr("history.numbers")}</th><th>${tr("history.source")}</th></tr></thead>
     <tbody>${rows.map(d => `<tr class="click" data-draw="${d.date}"><td class="strong">${fmtDate(d.date)}</td><td>${balls(d, "sm")}</td><td class="muted small">${esc(d.source)}</td></tr>`).join("")}</tbody></table></div>`;
   $$("[data-draw]", view).forEach(r => r.onclick = () => openDraw(r.dataset.draw));
+  if ($("#cd-d")) startCountdown();
 }
 
 /* ---------- settings ---------- */
@@ -428,14 +549,16 @@ function renderSettings() {
   view.innerHTML = `<h1>${tr("settings.title")}</h1>
     <div class="sect">${tr("settings.section.look")}</div>
     <div class="card">
-      <div class="row"><span class="strong">${tr("settings.language")}</span><div class="chips">
-        <button class="chip ${s.lang === "el" ? "active" : ""}" data-lang="el">Ελληνικά</button><button class="chip ${s.lang === "en" ? "active" : ""}" data-lang="en">English</button></div></div>
+      <div class="row"><span class="strong">${tr("settings.country")}</span><div id="dd-country"></div></div>
+      <div class="row"><span class="strong">${tr("settings.language")}</span><div id="dd-lang"></div></div>
       <div class="row"><span class="strong">${tr("settings.theme")}</span><div class="chips">
         <button class="chip ${s.theme === "dark" ? "active" : ""}" data-theme="dark">🌙 ${tr("settings.dark")}</button><button class="chip ${s.theme === "light" ? "active" : ""}" data-theme="light">☀️ ${tr("settings.light")}</button></div></div>
     </div>
 
     <div class="sect">🎰 ${tr("settings.section.draws")}</div>
     <div class="card">
+      ${country() ? `<div class="row"><div><div class="strong">${tr("settings.price")}</div><div class="muted small">${tr("settings.price.hint", { price: money(S.info.default_price) })}<br>${tr("price.note." + s.country)}</div></div>
+        <div class="price-edit"><input id="price-in" type="number" min="0.1" step="0.1" value="${S.info.price.toFixed(2)}"><span>€</span><button id="price-reset" class="btn ghost">${tr("settings.price.reset")}</button></div></div>` : ""}
       <div class="row"><div><div class="strong">${tr("settings.auto_update")}</div><div class="muted small">${tr("settings.auto_update.hint")}</div></div>
         <button id="sw-auto" class="switch ${s.auto_update ? "on" : ""}" aria-label="auto update"></button></div>
       <div class="row"><div><div class="strong">${tr("settings.data")}</div><div class="muted small">${S.info.count} ${tr("top.draws")} · ${fmtDate(S.info.last_draw)}<br>${tr("settings.sources")}</div></div>
@@ -456,7 +579,15 @@ function renderSettings() {
         <button id="sw-appcheck" class="switch ${s.check_app_updates ? "on" : ""}" aria-label="app update check"></button></div>
       <div id="app-upd-out"></div>
     </div>`;
-  $$("[data-lang]", view).forEach(b => b.onclick = async () => { await setSetting("lang", b.dataset.lang); await loadLocale(); await refreshInfo(); renderSettings(); });
+  dropdown($("#dd-country"), countryItems(), s.country, async code => { await setSetting("country", code); await refreshInfo(); renderSettings(); }, { align: "right" });
+  dropdown($("#dd-lang"), langItems(), s.lang, async code => { await setSetting("lang", code); await loadLocale(); await refreshInfo(); renderSettings(); }, { align: "right" });
+  const pr = $("#price-in");
+  if (pr) {
+    pr.onchange = async () => { const v = parseFloat(String(pr.value).replace(",", ".")); const prices = { ...(S.settings.prices || {}) };
+      if (v > 0) prices[S.settings.country] = Math.round(v * 100) / 100; else delete prices[S.settings.country];
+      await setSetting("prices", prices); await refreshInfo(); renderSettings(); };
+    $("#price-reset").onclick = async () => { const prices = { ...(S.settings.prices || {}) }; delete prices[S.settings.country]; await setSetting("prices", prices); await refreshInfo(); renderSettings(); };
+  }
   $$("[data-theme]", view).forEach(b => b.onclick = async () => { await setSetting("theme", b.dataset.theme); applyTheme(); renderSettings(); });
   $("#sw-auto").onclick = async e => { await setSetting("auto_update", !S.settings.auto_update); e.currentTarget.classList.toggle("on", S.settings.auto_update); };
   $("#sw-appcheck").onclick = async e => { await setSetting("check_app_updates", !S.settings.check_app_updates); e.currentTarget.classList.toggle("on", S.settings.check_app_updates); };
@@ -529,12 +660,18 @@ async function boot() {
   await ready();
   if (!(window.pywebview && window.pywebview.api)) startHeartbeat();
   await refreshInfo();
+  S.cat = await call("get_countries");
   applyTheme();
+  const hp0 = new URLSearchParams(location.hash.slice(1));      // dev/docs helper: #country=DE&lang=de&splash=1
+  if (hp0.get("country") && hp0.get("country") !== S.settings.country) await setSetting("country", hp0.get("country"));
+  if (hp0.get("lang") && hp0.get("lang") !== S.settings.lang) await setSetting("lang", hp0.get("lang"));
+  if (hp0.get("splash")) await setSetting("country", "");
   await loadLocale();
   await refreshInfo();
+  if (!S.settings.country) await showSplash();
   $$(".nav-btn").forEach(b => b.onclick = () => showView(b.dataset.view));
   $("#btn-theme").onclick = async () => { await setSetting("theme", S.settings.theme === "dark" ? "light" : "dark"); applyTheme(); renderAll(); };
-  $("#btn-lang").onclick = async () => { await setSetting("lang", S.settings.lang === "el" ? "en" : "el"); await loadLocale(); await refreshInfo(); renderAll(); };
+  document.addEventListener("click", closeDropdowns);
   $("#btn-full").onclick = () => { if (window.pywebview) call("toggle_fullscreen"); else if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); };
   $("#btn-update").onclick = () => runUpdate();
   $("#ov-btn").onclick = () => runUpdate({ firstRun: true });
@@ -547,7 +684,6 @@ async function boot() {
   }
   if (S.info.seed && S.info.count) setStatus(() => tr("update.seed", S.info.seed));
   const hp = new URLSearchParams(location.hash.slice(1));      // dev/docs helper: #view=ticket&lang=en&theme=light&draw=2026-10-13&gen=12
-  if (hp.get("lang") && hp.get("lang") !== S.settings.lang) { await setSetting("lang", hp.get("lang")); await loadLocale(); await refreshInfo(); }
   if (hp.get("theme") && hp.get("theme") !== S.settings.theme) { await setSetting("theme", hp.get("theme")); applyTheme(); }
   if (hp.get("static")) document.body.classList.add("no-anim");   // screenshots: no fade-in captured half-way
   if (hp.get("demo_update")) {          // docs: show the update screen; real release data, install button forced on
@@ -559,6 +695,7 @@ async function boot() {
     await renderAll();
     if (hp.get("gen")) { await setSetting("columns", +hp.get("gen")); await setSetting("algo", "auto_column"); await renderTicket(); await generate(); }
     if (hp.get("draw")) await openDraw(hp.get("draw"));
+    if (hp.get("menu")) { const b = $("#" + hp.get("menu") + " .dd-btn"); if (b) b.click(); }       // docs: show an open dropdown
     if (S.settings.auto_update && !hp.toString()) runUpdate();
   }
 }

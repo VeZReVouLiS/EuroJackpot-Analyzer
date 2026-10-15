@@ -44,7 +44,7 @@ def update(db: Database, progress: Progress | None = None, today: date | None = 
     """Fetch every draw (or its details) missing from the DB. Returns a summary dict."""
     today = today or date.today()
     existing = db.existing_dates()
-    no_details = db.dates_missing_details()
+    no_details = db.dates_missing_details(official.DETAILS_VERSION)
     if db.get_meta("backfill_attempt") == today.isoformat():
         no_details = set()       # already tried today (e.g. imported data without details): don't hammer
     first_run = not existing

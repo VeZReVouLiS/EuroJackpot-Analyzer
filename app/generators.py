@@ -109,6 +109,7 @@ def generate_ticket(
     algo: str = AUTO_TICKET,
     rng: _random.Random | None = None,
     keep: list[dict] | None = None,
+    price: float | None = None,
 ) -> dict:
     """keep: already locked columns (their position is preserved, the rest are regenerated).
 
@@ -134,10 +135,11 @@ def generate_ticket(
                 seen.add(key)
                 break
         slots[i] = col
+    price = rules.COLUMN_PRICE if price is None else float(price)
     return {
         "columns": slots,
         "algo": algo,
         "resolved_algo": ticket_algo if algo != AUTO_COLUMN else None,
-        "price_per_column": rules.COLUMN_PRICE,
-        "total": round(columns * rules.COLUMN_PRICE, 2),
+        "price_per_column": price,
+        "total": round(columns * price, 2),
     }

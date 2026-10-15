@@ -6,6 +6,7 @@ $py = ".\.venv\Scripts\python.exe"
 if (-not (Test-Path $py)) { python -m venv .venv; & $py -m pip install -r requirements.txt }
 
 & $py -m PyInstaller --noconfirm --clean --windowed --name EuroJackpotApp `
+    --icon "$PWD\build\icon.ico" `
     --distpath dist --workpath build\work --specpath build\work `
     --add-data "$PWD\app\ui;app\ui" `
     --add-data "$PWD\app\locales;app\locales" `
