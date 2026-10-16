@@ -1,8 +1,8 @@
 # Progress
 
 ## >>> ΠΟΥ ΕΧΟΥΜΕ ΜΕΙΝΕΙ (συνέχεια από το σπίτι) <<<
-App: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer — release **v1.4.0**: Windows zip, Mac zips (arm64/intel), **Android APK**, και **web app (PWA) στο GitHub Pages**: https://vezrevoulis.github.io/EuroJackpot-Analyzer/ (iPhone: Safari → Προσθήκη στην οθόνη Αφετηρίας).
-Home Assistant: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA — release **v0.4.2**, εγκατεστημένο στο ha.dosman.gr.
+App: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer — release **v1.5.0**: Windows zip, Mac zips (arm64/intel), **Android APK**, και **web app (PWA) στο GitHub Pages**: https://vezrevoulis.github.io/EuroJackpot-Analyzer/ (iPhone: Safari → Προσθήκη στην οθόνη Αφετηρίας).
+Home Assistant: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA — release **v0.4.3**, εγκατεστημένο στο ha.dosman.gr.
 
 **Κινητά (v1.4.0):** `web/core.js` (πύλη Python→JS: rules, stats, generators, evaluation, importer, exporter), `web/webapi.js` (το api.py στον browser, IndexedDB μέσω `web/store.js`), `web/boot.js` (+ service worker), `tools/build_site.py` → `site/` (UI + web/ + κληρώσεις + manifest + sw.js), `tools/update_web_data.py` (νέες κληρώσεις), `tools/make_golden.py` + `web/tests/` (ισοδυναμία Python↔JS: `node --test web/tests/core.test.mjs` στο CI, ή `web/tests/run.html` σε browser). Workflows: `web.yml` (tests + deploy Pages, κάθε πρωί 06:15 UTC και Τρί/Παρ 19:30–22:30 UTC), `android.yml` (Capacitor 7 → APK, υπογραφή από secrets, upload στο release), `mac.yml`, `android-keystore.yml` (έτρεξε μία φορά). Το keystore του Android υπάρχει ΜΟΝΟ ως secrets `ANDROID_KEYSTORE_B64` / `ANDROID_KEYSTORE_PASSWORD` + αντίγραφο στο `C:\Users\DimitrisSarlis\Projects\_secrets_eurojackpot` (εκτός git· κράτα αντίγραφο, αλλιώς οι ενημερώσεις APK θέλουν απεγκατάσταση).
 UI κινητού: κάτω μενού ≤760px, `--safe-top/--safe-bottom`, hash `#safe=50` και `#static=1` για screenshots, `#demo=1` δημιουργεί demo δελτία. Screenshots κινητού: `scratchpad/cdp_shots.py` (Edge DevTools, 390x844 / 412x915 @2x) → `docs/images/phone-iphone(-en).png`, `phone-android(-en).png`.
