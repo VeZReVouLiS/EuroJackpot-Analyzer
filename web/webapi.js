@@ -103,6 +103,16 @@ export async function createApi() {
     return [null, null];
   }
 
+  function cleanColumns(columns) {
+    const out = (columns || []).map((c) => {
+      const main = core.sortNumbers(c.main.map(Number)), euro = core.sortNumbers(c.euro.map(Number));
+      if (!core.validColumn(main, euro)) throw new Error("invalid column");
+      return { main, euro, algo: "manual" };
+    });
+    if (out.length < 1 || out.length > core.MAX_COLUMNS) throw new Error(`columns must be 1..${core.MAX_COLUMNS}`);
+    return out;
+  }
+
   const api = {
     /* settings */
     async get_settings() { return settings(); },
@@ -194,6 +204,19 @@ export async function createApi() {
       }
       await saveTickets(all);
       return { ...t, id: tid, target_date: target, played };
+    },
+    async save_manual_ticket(columns, targetDate = null) {
+      const cols = cleanColumns(columns), price = effectivePrice(settings());
+      const target = targetDate || core.nextDrawDates(new Date(), 1)[0];
+      if (!core.parseDate(target)) throw new Error("invalid date");
+      const all = tickets(), tid = store.get("ticket_seq", 1); await store.set("ticket_seq", tid + 1);
+      const t = { id: tid, created_at: nowIso(), target_date: target, algo: "manual", columns: cols, price: r2(price * cols.length), played: false, result: null, seen: false };
+      all.push(t); await saveTickets(all);
+      return t;
+    },
+    async analyze_columns(columns) {
+      const cols = cleanColumns(columns), s = settings();
+      return core.analyze(cols, draws, core.computeStats(draws), effectivePrice(s), s.country || "");
     },
     async get_next_draws(n = 4) { return core.nextDrawDates(new Date(), Number(n)); },
     async set_ticket_played(id, played) { const all = tickets(); const t = all.find((x) => x.id === Number(id)); if (t) { t.played = !!played; await saveTickets(all); } return t || null; },

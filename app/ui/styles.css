@@ -338,3 +338,23 @@ button, .chip, .algo { touch-action: manipulation; }
 @media (max-width: 760px) { #sidebar .about-btn { display: none; } .about-top { display: inline-block; } .about-head { padding-right: 2.4rem; } }
 
 #about-body { width: 100%; text-align: left; }
+
+/* own ticket: number picker, analysis window */
+.mode-chips { margin: -.3rem 0 1rem; }
+.pickgrid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: .35rem; }
+.pickgrid.euro { grid-template-columns: repeat(6, minmax(0, 1fr)); max-width: 24rem; }
+.pick { aspect-ratio: 1; border-radius: 50%; border: 1px solid var(--card-b); background: var(--card); font-weight: 800; font-size: .95rem; padding: 0; }
+.pick:hover { background: var(--card-b); }
+.pick.sel { color: #fff; border-color: transparent; background: radial-gradient(circle at 30% 25%, var(--ball1), var(--ball2)); box-shadow: 0 4px 12px rgba(67,56,202,.45); }
+.pick.euro.sel { color: #422006; background: radial-gradient(circle at 30% 25%, var(--gold1), var(--gold2)); box-shadow: 0 4px 12px rgba(245,158,11,.45); }
+.saved { display: flex; flex-direction: column; gap: .7rem; }
+#analysis { z-index: 50; } #detail { z-index: 55; }
+#analysis-body { width: 100%; text-align: left; }
+#analysis-body h2 { margin: 0 0 .6rem; } #analysis-body h3 { margin: 1.2rem 0 .5rem; } #analysis-body h4 { margin: .8rem 0 .3rem; color: var(--muted); }
+.an-disc { padding: .7rem 1rem; border-radius: .8rem; border: 1px solid rgba(245,158,11,.4); background: rgba(245,158,11,.1); color: var(--text); margin: .6rem 0; }
+.an-col { margin-top: 1rem; padding: 1rem 1.1rem; border-radius: 1rem; background: var(--card); border: 1px solid var(--card-b); }
+.an-head { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+#analysis-body details summary { cursor: pointer; font-weight: 700; margin: .4rem 0; }
+@media (max-width: 760px) { .pick { font-size: .8rem; } .pickgrid { gap: .25rem; } }
+
+.pickgrid { max-width: 46rem; }

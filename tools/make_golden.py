@@ -8,7 +8,7 @@ import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from app import evaluation, exporter, rules, stats
+from app import analysis, evaluation, exporter, rules, stats
 from app.sources import importer
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -56,6 +56,10 @@ def main() -> None:
             gold["import"][k] = [{"date": r["date"], "main": r["main"], "euro": r["euro"]} for r in importer.parse_text(text, "x.json" if k.startswith("json") else "x.csv")]
         except Exception as e:  # noqa: BLE001
             gold["import"][k] = "error"
+    acols = [{"main": [11, 17, 20, 22, 35], "euro": [4, 8]}, {"main": [1, 2, 3, 4, 5], "euro": [1, 2]}, {"main": [7, 14, 21, 28, 35], "euro": [3, 9]}]
+    full = stats.compute(draws)
+    gold["analysis"] = {c: {"columns": acols, "price": 2.5 if c == "GR" else 2.0, "country": c,
+                            "result": analysis.analyze(acols, draws, full, 2.5 if c == "GR" else 2.0, c)} for c in ("GR", "DE")}
     gold["samples"] = SAMPLES
     for stamp in ("2026-10-13T10:00", "2026-10-13T21:14", "2026-10-13T21:15", "2026-10-16T22:00", "2022-03-25T09:00", "2022-03-28T12:00", "2026-12-31T08:30"):
         now = datetime.fromisoformat(stamp)

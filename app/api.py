@@ -8,7 +8,7 @@ import traceback
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import appupdate, countries, evaluation, exporter, generators, rules, stats, updater, version
+from . import analysis, appupdate, countries, evaluation, exporter, generators, rules, stats, updater, version
 from .db import Database
 from .paths import resource_dir
 from .sources import allwyn, importer, official
@@ -222,6 +222,35 @@ class Api:
                                       t["total"])
             played = False
         return {**t, "id": tid, "target_date": target, "played": played}
+
+    @staticmethod
+    def _clean_columns(columns: list) -> list[dict]:
+        """Validate the columns sent by the UI: 1-12 columns of 5 distinct numbers 1-50 + 2 distinct Euro numbers 1-12."""
+        out = []
+        for c in columns or []:
+            main, euro = sorted(int(n) for n in c["main"]), sorted(int(n) for n in c["euro"])
+            if not importer._valid(main, euro):
+                raise ValueError("invalid column")
+            out.append({"main": main, "euro": euro, "algo": "manual"})
+        if not 1 <= len(out) <= rules.MAX_COLUMNS:
+            raise ValueError(f"columns must be 1..{rules.MAX_COLUMNS}")
+        return out
+
+    def save_manual_ticket(self, columns: list, target_date: str | None = None) -> dict:
+        """A ticket picked by the user (not generated). Stored like any other ticket."""
+        cols = self._clean_columns(columns)
+        price = countries.effective_price(self.get_settings())
+        target = target_date or rules.next_draw_dates(datetime.now(), 1)[0].isoformat()
+        date.fromisoformat(target)
+        tid = self._db.add_ticket(datetime.now().isoformat(timespec="seconds"), target, "manual", cols, round(price * len(cols), 2))
+        return {**self._db.get_ticket(tid)}
+
+    def analyze_columns(self, columns: list) -> dict:
+        """Probabilities, expected prize, statistical profile and the history check of a ticket (see analysis.py)."""
+        cols = self._clean_columns(columns)
+        s = self.get_settings()
+        draws = self._db.all_draws(with_details=True)
+        return analysis.analyze(cols, draws, stats.compute(draws), countries.effective_price(s), s.get("country") or "")
 
     def get_next_draws(self, n: int = 4) -> list:
         return [d.isoformat() for d in rules.next_draw_dates(datetime.now(), int(n))]

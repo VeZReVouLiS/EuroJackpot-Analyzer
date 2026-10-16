@@ -3,7 +3,11 @@
 import * as core from "../core.js";
 
 const same = (a, b, path, out) => {
-  if (typeof a === "number" && typeof b === "number") { if (Math.abs(a - b) > 0.0101) out.push(`${path}: ${a} != ${b}`); return; }
+  if (typeof a === "number" && typeof b === "number") {
+    const exact = /\.(p|p_any|p_jackpot)$/.test(path);                 // probabilities are not rounded: compare them precisely
+    if (exact ? Math.abs(a - b) > 1e-9 * Math.abs(b) : Math.abs(a - b) > 0.0101) out.push(`${path}: ${a} != ${b}`);
+    return;
+  }
   if (a === null || b === null || typeof a !== "object" || typeof b !== "object") { if (a !== b) out.push(`${path}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`); return; }
   if (Array.isArray(a) !== Array.isArray(b)) { out.push(`${path}: array mismatch`); return; }
   const ka = Object.keys(a).sort(), kb = Object.keys(b).sort();
@@ -34,6 +38,10 @@ export async function runChecks(loadJson) {
   }
   for (const g of gold.next_draws) check(`next_draws[${g.now}]`, core.nextDrawDates(new Date(g.now), 4), g.dates);
   check("csv", core.toCsv(gold.csv_input), gold.csv);
+
+  // ticket analysis (probabilities, profile, history check)
+  const full = core.computeStats(draws);
+  for (const [country, g] of Object.entries(gold.analysis)) check(`analysis[${country}]`, core.analyze(g.columns, draws, full, g.price, g.country), g.result);
 
   // round trip of the app's own export
   const exp = core.toJson(draws.slice(-5), [], "x"), back = core.parseText(exp, "x.json");

@@ -1,10 +1,11 @@
 "use strict";
 /* EuroJackpot Analyzer UI. Talks to Python through window.pywebview.api (or /rpc in dev-server mode). */
 
-const S = { t: {}, settings: {}, info: {}, stats: null, ticket: null, locks: {}, view: "stats", freqKind: "main", charts: [], polling: null,
+const S = { tkMode: "auto", manual: { cols: [], main: [], euro: [], editing: -1, saved: null }, t: {}, settings: {}, info: {}, stats: null, ticket: null, locks: {}, view: "stats", freqKind: "main", charts: [], polling: null,
   lastError: null, appUpdate: null };
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const DEMO_COLS = [{ main: [7, 14, 21, 28, 35], euro: [3, 9] }, { main: [11, 17, 20, 22, 35], euro: [4, 8] }, { main: [3, 12, 25, 38, 44], euro: [2, 11] }];
 const ALGO_ORDER = ["auto_ticket", "auto_column", "random", "hot", "cold", "overdue", "weighted", "balanced", "smart"];
 
 // Browser/fallback mode (no native window): the local server hands us a secret token in the URL (?t=...)
@@ -423,8 +424,15 @@ async function renderTicket() {
   killCharts();
   const view = $("#view-ticket"), cfg = S.settings, tk = S.ticket;
   if (!S.info.count) { renderEmpty(view); return; }
+  const modes = `<div class="chips mode-chips">${["auto", "manual"].map(m => `<button class="chip ${S.tkMode === m ? "active" : ""}" data-mode="${m}">${tr("ticket.mode." + m)}</button>`).join("")}</div>`;
+  if (S.tkMode === "manual") {
+    view.innerHTML = `<h1>${tr("ticket.title")}</h1>${modes}<div id="manual-box"></div><div class="disclaimer">${tr("ticket.disclaimer")}</div>`;
+    $$("[data-mode]", view).forEach(b => b.onclick = () => { S.tkMode = b.dataset.mode; renderTicket(); });
+    drawManual();
+    return;
+  }
   view.innerHTML = `
-    <h1>${tr("ticket.title")}</h1>
+    <h1>${tr("ticket.title")}</h1>${modes}
     <div class="card">
       <div class="toolbar"><span class="strong">${tr("ticket.columns")}:</span>
         <div class="stepper"><button id="c-minus">−</button><output id="c-val">${cfg.columns}</output><button id="c-plus">+</button></div>
@@ -438,6 +446,7 @@ async function renderTicket() {
   const setCols = async v => { v = Math.max(1, Math.min(S.info.max_columns, v)); await setSetting("columns", v); $("#c-val").textContent = v; };
   $("#c-minus").onclick = () => setCols(S.settings.columns - 1);
   $("#c-plus").onclick = () => setCols(S.settings.columns + 1);
+  $$("[data-mode]", view).forEach(b => b.onclick = () => { S.tkMode = b.dataset.mode; renderTicket(); });
   $$(".algo", view).forEach(b => b.onclick = async () => { await setSetting("algo", b.dataset.algo); $$(".algo", view).forEach(x => x.classList.toggle("active", x === b)); });
   $("#gen").onclick = () => generate();
   drawTicket();
@@ -483,6 +492,102 @@ function drawTicket() {
   };
 }
 
+/* ---------- my own ticket: pick the numbers ---------- */
+const range = n => Array.from({ length: n }, (_, i) => i + 1);
+const pickRandom = (pool, k) => { const a = [...pool], out = []; while (out.length < k) out.push(a.splice(Math.floor(Math.random() * a.length), 1)[0]); return out.sort((x, y) => x - y); };
+async function drawManual() {
+  const box = $("#manual-box"); if (!box) return;
+  const m = S.manual, max = S.info.max_columns;
+  if (!S.nextDraws) S.nextDraws = await call("get_next_draws", 4);
+  if (m.saved) {                      // saved: offer "I played it" and the way to My tickets
+    const t = m.saved;
+    box.innerHTML = `<div class="card saved"><div><b>✅ ${tr("manual.saved")}</b><div class="muted small">${tr("tk.for_draw")}: ${fmtDay(t.target_date)} · ${tr("mt.cost")} ${money(t.price)}</div></div>
+      <div class="btn-row"><button id="mn-played" class="btn ${t.played ? "primary" : ""}">${t.played ? "✅ " + tr("tk.played_on") : "☐ " + tr("manual.mark_played")}</button>
+      <button id="mn-open" class="btn">${tr("manual.open_tickets")}</button><button id="mn-new" class="btn">＋ ${tr("manual.add")}</button></div>
+      <div class="muted small">${tr("tk.played.hint")}</div></div>`;
+    $("#mn-played").onclick = async () => { const r = await call("set_ticket_played", t.id, !t.played); m.saved = r; drawManual(); };
+    $("#mn-open").onclick = () => showView("mytickets");
+    $("#mn-new").onclick = () => { S.manual = { cols: [], main: [], euro: [], editing: -1, saved: null }; drawManual(); };
+    return;
+  }
+  const ready = m.main.length === 5 && m.euro.length === 2;
+  const grid = (n, key, cls) => range(n).map(x => `<button class="pick ${cls} ${m[key].includes(x) ? "sel" : ""}" data-pk="${key}" data-n="${x}">${x}</button>`).join("");
+  const cols = m.cols.map((c, i) => `<div class="col-row ${m.editing === i ? "locked" : ""}"><span class="col-no">${tr("ticket.column")} ${i + 1}</span>${balls(c)}
+      <button class="icon-btn" data-edit="${i}" title="${tr("manual.edit")}">✏️</button><button class="icon-btn" data-del="${i}" title="${tr("manual.remove")}">🗑</button></div>`).join("");
+  box.innerHTML = `<div class="card">
+      <h3>${tr("manual.title")}</h3><div class="muted small">${tr("manual.hint", { n: max })}</div>
+      <div class="strong" style="margin:.9rem 0 .5rem">${tr("manual.main")} <span class="muted">${m.main.length}/5</span></div><div class="pickgrid">${grid(50, "main", "")}</div>
+      <div class="strong" style="margin:.9rem 0 .5rem">${tr("manual.euro")} <span class="muted">${m.euro.length}/2</span></div><div class="pickgrid euro">${grid(12, "euro", "euro")}</div>
+      <div class="btn-row"><button id="mn-add" class="btn primary" ${ready ? "" : "disabled"}>${m.editing >= 0 ? tr("manual.update") : "＋ " + tr("manual.add")}</button>
+        <button id="mn-rand" class="btn">🎲 ${tr("manual.pick_random")}</button><button id="mn-clear" class="btn">${tr("manual.clear")}</button></div>
+      ${ready ? "" : `<div class="muted small" style="margin-top:.5rem">${tr("manual.need")}</div>`}</div>
+    <div class="card" style="margin-top:1rem"><h3>${tr("manual.columns")} (${m.cols.length}/${max})</h3>
+      ${m.cols.length ? `<div class="cols" style="margin-top:0">${cols}</div>` : `<div class="muted">${tr("manual.empty")}</div>`}
+      <div class="toolbar" style="margin:1rem 0 0"><span class="strong">${tr("tk.for_draw")}:</span>
+        <select id="mn-target">${[...new Set(S.nextDraws || [])].sort().map(d => `<option value="${d}">${fmtDay(d)}</option>`).join("")}</select>
+        <span class="muted">${m.cols.length} × ${money(S.info.price)} = <b>${money(m.cols.length * S.info.price)}</b></span></div>
+      <div class="btn-row"><button id="mn-analyze" class="btn" ${m.cols.length ? "" : "disabled"}>📊 ${tr("manual.analyze")}</button>
+        <button id="mn-save" class="btn primary" ${m.cols.length ? "" : "disabled"}>💾 ${tr("manual.save")}</button></div></div>`;
+  $$("[data-pk]", box).forEach(b => b.onclick = () => {
+    const arr = m[b.dataset.pk], n = +b.dataset.n, lim = b.dataset.pk === "main" ? 5 : 2, i = arr.indexOf(n);
+    if (i >= 0) arr.splice(i, 1); else if (arr.length < lim) arr.push(n);
+    arr.sort((x, y) => x - y); drawManual();
+  });
+  $("#mn-rand").onclick = () => { m.main = pickRandom(range(50), 5); m.euro = pickRandom(range(12), 2); drawManual(); };
+  $("#mn-clear").onclick = () => { m.main = []; m.euro = []; m.editing = -1; drawManual(); };
+  $("#mn-add").onclick = () => {
+    if (!ready) return toast(tr("manual.need"));
+    const col = { main: [...m.main], euro: [...m.euro] };
+    if (m.editing >= 0) m.cols[m.editing] = col; else if (m.cols.length >= max) return toast(tr("manual.max", { n: max })); else m.cols.push(col);
+    m.main = []; m.euro = []; m.editing = -1; drawManual();
+  };
+  $$("[data-edit]", box).forEach(b => b.onclick = () => { const c = m.cols[+b.dataset.edit]; m.main = [...c.main]; m.euro = [...c.euro]; m.editing = +b.dataset.edit; drawManual(); });
+  $$("[data-del]", box).forEach(b => b.onclick = () => { m.cols.splice(+b.dataset.del, 1); m.editing = -1; drawManual(); });
+  $("#mn-analyze").onclick = () => openAnalysis(m.cols);
+  $("#mn-save").onclick = async () => {
+    try { m.saved = await call("save_manual_ticket", m.cols, $("#mn-target").value); drawManual(); } catch (e) { toast(e.message || String(e)); }
+  };
+}
+
+/* ---------- ticket analysis: odds, expected prize, profile, "would it have won?" ---------- */
+const pct = p => (p * 100).toLocaleString(loc(), { maximumSignificantDigits: 3 }) + " %";
+const oneIn = odds => tr("an.odds", { n: nf(Math.round(odds)) });
+async function openAnalysis(columns) {
+  $("#analysis-body").innerHTML = `<div class="muted" style="padding:2rem">${tr("app.checking")}</div>`;
+  $("#analysis").classList.remove("hidden");
+  let r;
+  try { r = await call("analyze_columns", columns.map(c => ({ main: c.main, euro: c.euro }))); }
+  catch (e) { closeAnalysis(); toast(e.message || String(e)); return; }
+  const o = r.overall, kpi = (l, v, cls = "") => `<div class="kpi"><span class="muted small">${l}</span><b class="${cls}">${v}</b></div>`;
+  const tierRows = o.tiers.map(x => `<tr><td><b>${esc(x.tier.replace("+", " + "))}</b></td><td class="num">${pct(x.p)}</td><td class="num">${nf(Math.round(x.odds))}</td><td class="num">${x.avg_prize > 0 ? money(x.avg_prize) : "-"}</td></tr>`).join("");
+  const cols = r.columns.map((c, i) => {
+    const p = c.profile, b = c.backtest;
+    const wins = [...b.wins].reverse().slice(0, 60).map(w => `<tr class="click" data-open="${w.date}"><td>${fmtDate(w.date)}</td><td><b>${esc(w.tier.replace("+", " + "))}</b></td><td class="num">${w.known ? money(w.prize) : "?"}</td></tr>`).join("");
+    return `<div class="an-col"><div class="an-head"><span class="strong">${tr("an.column")} ${i + 1}</span>${balls(c, "sm")}</div>
+      <h4>${tr("an.profile")}</h4><ul class="about-list">
+        <li>${tr("an.freq", { x: (p.freq_ratio ?? 0).toFixed(2) })}</li><li>${tr("an.gap", { n: p.avg_gap })}</li>
+        <li>${tr("an.shape", p)} · <b>${p.typical ? tr("an.typical") : tr("an.untypical")}</b></li>
+        <li>${tr("an.hot", { a: p.hottest.join(", ") })} · ${tr("an.overdue", { a: p.most_overdue.join(", ") })}</li></ul>
+      <h4>${tr("an.history")}</h4>
+      ${b.wins.length ? `<div>${tr("an.hist_win", { n: nf(b.draws_with_win), d: nf(b.draws), best: (b.best_tier || "-").replace("+", " + ") })} ${tr("an.hist_total", { won: money(b.total_prize), cost: money(b.cost) })}${b.complete ? "" : `<div class="muted small">${tr("an.hist_unknown")}</div>`}</div>
+        <details><summary>${tr("an.hist_list")} (${b.wins.length})</summary><table><tbody>${wins}</tbody></table></details>` : `<div>${tr("an.hist_never")}</div>`}</div>`;
+  }).join("");
+  $("#analysis-body").innerHTML = `<h2>${tr("an.title")}</h2><div class="note an-disc">${tr("an.disclaimer")}</div>
+    <h3>${tr("an.overall")}</h3>
+    <div class="kpis">${kpi(tr("an.cost"), `${o.columns} × ${money(o.price)} = ${money(o.cost)}`)}
+      ${kpi(tr("an.p_any"), `${pct(o.p_any)}<span class="muted small"> ${oneIn(o.odds_any)}</span>`)}
+      ${kpi(tr("an.jackpot"), oneIn(o.odds_jackpot))}
+      ${kpi(tr("an.expected"), money(o.expected_prize))}
+      ${kpi(tr("an.net"), (o.expected_net > 0 ? "+" : "") + money(o.expected_net), o.expected_net < 0 ? "neg" : "pos")}</div>
+    <div class="muted small">${tr("an.assumption")}</div>
+    <details style="margin:.8rem 0"><summary>${tr("an.tiers")}</summary><table><thead><tr><th>${tr("an.th.tier")}</th><th class="num">${tr("an.th.p")}</th><th class="num">${tr("an.th.odds")}</th><th class="num">${tr("an.th.prize")}</th></tr></thead><tbody>${tierRows}</tbody></table></details>
+    ${cols}
+    <div class="note">${tr("an.hist_all", { won: money(o.backtest.total_prize), cost: money(o.backtest.cost) })}</div>
+    <div class="note an-disc">${tr("an.disclaimer")}</div>`;
+  $$("[data-open]", $("#analysis-body")).forEach(tr_ => tr_.onclick = () => openDraw(tr_.dataset.open));
+}
+const closeAnalysis = () => $("#analysis").classList.add("hidden");
+
 /* ---------- my tickets: history + cross-check with the draws ---------- */
 const TK_FILTERS = [["all", "mt.filter.all"], ["played", "mt.filter.played"], ["pending", "mt.filter.pending"], ["winners", "mt.filter.winners"]];
 function ticketBalls(c, res, draw) {
@@ -509,6 +614,7 @@ async function renderMyTickets() {
   $$("[data-played]", view).forEach(b => b.onclick = async () => { await call("set_ticket_played", +b.dataset.played, b.dataset.val !== "1"); renderMyTickets(); });
   $$("[data-del]", view).forEach(b => b.onclick = async () => { if (confirm(tr("mt.delete_confirm"))) { await call("delete_ticket", +b.dataset.del); if (S.ticket && S.ticket.id === +b.dataset.del) S.ticket = null; renderMyTickets(); } });
   $$("[data-draw]", view).forEach(b => b.onclick = () => openDraw(b.dataset.draw));
+  $$("[data-analyze]", view).forEach(b => b.onclick = () => { const t = data.tickets.find(x => x.id === +b.dataset.analyze); if (t) openAnalysis(t.columns); });
   if (data.unseen_wins) { await call("mark_tickets_seen"); await refreshInfo(); }
 }
 function ticketCard(t) {
@@ -526,7 +632,7 @@ function ticketCard(t) {
     <div class="tk-head"><div><b ${r ? `class="linkish" data-draw="${t.target_date}"` : ""}>${fmtDay(t.target_date)}</b> ${status}
       ${t.played ? "" : `<span class="status-chip dim">${tr("mt.suggestion")}</span>`}
       <div class="muted small">${tr("mt.created")} ${fmtDT(t.created_at)} · ${algoLabel(t.algo)} · ${tr("mt.cost")} ${money(t.price)}</div></div>
-      <div class="tk-actions"><button class="btn ghost" data-played="${t.id}" data-val="${t.played ? 1 : 0}">${t.played ? "✅ " + tr("tk.played") : "☐ " + tr("tk.played")}</button>
+      <div class="tk-actions"><button class="btn ghost" data-analyze="${t.id}">📊 ${tr("an.btn")}</button><button class="btn ghost" data-played="${t.id}" data-val="${t.played ? 1 : 0}">${t.played ? "✅ " + tr("tk.played") : "☐ " + tr("tk.played")}</button>
         <button class="btn ghost" data-del="${t.id}" title="${tr("mt.delete")}">🗑</button></div></div>
     ${r ? `<div class="muted small" style="margin:.5rem 0 .3rem">${tr("mt.winning_numbers")} ${fmtDate(r.draw_date)}:</div>${balls(r.draw, "sm")}` : ""}
     ${r && !r.complete ? `<div class="note">${tr("mt.update_hint")}</div>` : ""}
@@ -721,10 +827,12 @@ async function boot() {
   $("#btn-update").onclick = () => runUpdate();
   $("#ov-btn").onclick = () => runUpdate({ firstRun: true });
   $("#detail-close").onclick = closeDetail;
+  $("#analysis-close").onclick = closeAnalysis;
+  $("#analysis").addEventListener("click", e => { if (e.target.id === "analysis") closeAnalysis(); });
   $("#btn-about").onclick = openAbout; $("#btn-about-top").onclick = openAbout; $("#about-close").onclick = closeAbout;
   $("#about").addEventListener("click", e => { if (e.target.id === "about") closeAbout(); });
   $("#detail").addEventListener("click", e => { if (e.target.id === "detail") closeDetail(); });
-  window.addEventListener("keydown", e => { if (e.key === "F11") { e.preventDefault(); $("#btn-full").click(); } if (e.key === "Escape") { closeDetail(); closeAbout(); } });
+  window.addEventListener("keydown", e => { if (e.key === "F11") { e.preventDefault(); $("#btn-full").click(); } if (e.key === "Escape") { closeDetail(); closeAbout(); closeAnalysis(); } });
   window.addEventListener("resize", () => S.charts.forEach(c => c.resize()));
   if (S.settings.check_app_updates && S.info.repo_configured) {     // quiet background check, shows a badge only
     call("check_app_update").then(r => { S.appUpdate = r; updateBadge(); }).catch(() => {});
@@ -737,6 +845,10 @@ async function boot() {
     S.appUpdate = await call("check_app_update"); S.appUpdate.installable = true; updateBadge();
   }
   if (hp.get("view")) S.view = hp.get("view");
+  if (hp.get("mode") === "manual") {            // docs: the picker, optionally with some columns filled in
+    S.tkMode = "manual";
+    if (hp.get("fill")) { S.manual.cols = DEMO_COLS.map(c => ({ main: [...c.main], euro: [...c.euro] })); S.manual.main = [5, 18, 27, 33, 41]; S.manual.euro = [6]; }
+  }
   if (!S.info.count) { await runUpdate({ firstRun: true }); }
   else {
     if (hp.get("demo")) {              // docs: three demo tickets (two checked against past draws, one waiting)
@@ -748,6 +860,7 @@ async function boot() {
     if (hp.get("gen")) { await setSetting("columns", +hp.get("gen")); await setSetting("algo", "auto_column"); await renderTicket(); await generate(); }
     if (hp.get("draw")) await openDraw(hp.get("draw"));
     if (hp.get("about")) openAbout();
+    if (hp.get("analysis")) openAnalysis(S.manual.cols.length ? S.manual.cols : DEMO_COLS);
     if (hp.get("menu")) { const b = $("#" + hp.get("menu") + " .dd-btn"); if (b) b.click(); }       // docs: show an open dropdown
     if (S.settings.auto_update && !hp.toString()) runUpdate();
   }

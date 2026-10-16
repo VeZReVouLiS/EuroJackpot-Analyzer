@@ -260,6 +260,7 @@ export function validColumn(main, euro) {
     && euro.length === 2 && new Set(euro).size === 2 && euro.every((n) => n >= 1 && n <= 12);
 }
 const sortNum = (a) => [...a].sort((x, y) => x - y);
+export const sortNumbers = sortNum;
 const looksDate = (c) => parseDate(c) && /[./-]|\d{8}/.test(c);
 
 function record(rec) {
@@ -375,3 +376,81 @@ export function toCsv(draws) {
   return ["date;n1;n2;n3;n4;n5;e1;e2", ...draws.map((d) => [d.date, ...d.main, ...d.euro].join(";"))].join("\n") + "\n";
 }
 export function defaultFilename(fmt) { const n = new Date(); return `eurojackpot-draws-${isoOf(n.getFullYear(), n.getMonth() + 1, n.getDate())}.${fmt}`; }
+
+/* ---------------------------------------------------------------- analysis (port of app/analysis.py) */
+const choose = (n, k) => { let r = 1; for (let i = 1; i <= k; i++) r = r * (n - k + i) / i; return Math.round(r); };
+export const TIERS = ["5+2", "5+1", "5+0", "4+2", "4+1", "3+2", "4+0", "2+2", "3+1", "3+0", "1+2", "2+1"];
+export const GREEK_TIER = "1+1", AVG_SINCE = "2022-03-29";
+export function tierProbability(main, euro) {
+  const pm = choose(5, main) * choose(MAIN_MAX - 5, 5 - main) / choose(MAIN_MAX, 5);
+  const pe = choose(2, euro) * choose(12 - 2, 2 - euro) / choose(12, 2);
+  return pm * pe;
+}
+export function tierProbabilities(country = "") {
+  const out = {};
+  for (const t of TIERS) out[t] = tierProbability(+t[0], +t[2]);
+  if (country === "GR") out[GREEK_TIER] = tierProbability(1, 1);
+  return out;
+}
+export function averagePrizes(draws, since = AVG_SINCE) {
+  const acc = {};
+  for (const d of draws) {
+    if (d.date < since || !d.details) continue;
+    for (const c of d.details.classes || []) if ((c.prize || 0) > 0) (acc[c.tier] = acc[c.tier] || []).push(Number(c.prize));
+  }
+  return Object.fromEntries(Object.entries(acc).map(([t, v]) => [t, v.reduce((a, b) => a + b, 0) / v.length]));
+}
+function profile(col, st) {
+  const main = sortNum(col.main), mm = new Map(st.main.map((x) => [x.n, x])), em = new Map(st.euro.map((x) => [x.n, x]));
+  const base = st.main.reduce((a, x) => a + x.pct, 0) / st.main.length;
+  const act = st.euro.filter((x) => x.active), baseE = act.reduce((a, x) => a + x.pct, 0) / Math.max(1, act.length);
+  const freq = main.map((n) => mm.get(n).pct), gaps = main.map((n) => mm.get(n).gap || 0);
+  const odd = main.reduce((a, n) => a + (n % 2), 0), low = main.reduce((a, n) => a + (n <= 25 ? 1 : 0), 0);
+  let consec = 0; for (let i = 1; i < main.length; i++) if (main[i] === main[i - 1] + 1) consec++;
+  const total = main.reduce((a, n) => a + n, 0);
+  const typical = odd >= 2 && odd <= 3 && low >= 2 && low <= 3 && total >= 90 && total <= 160 && consec <= 1;
+  const sorter = (f) => [...main].sort((a, b) => (f(b) - f(a)) || (a - b)).slice(0, 2);
+  return {
+    freq_ratio: base ? round(freq.reduce((a, b) => a + b, 0) / freq.length / base, 3) : null,
+    euro_freq_ratio: baseE ? round(col.euro.reduce((a, n) => a + em.get(n).pct, 0) / col.euro.length / baseE, 3) : null,
+    avg_gap: round(gaps.reduce((a, b) => a + b, 0) / gaps.length, 1),
+    hottest: sorter((n) => mm.get(n).pct), most_overdue: sorter((n) => mm.get(n).gap || 0),
+    odd, even: 5 - odd, low, high: 5 - low, sum: total, consecutive: consec, typical,
+  };
+}
+export function backtest(columns, draws, country = "", price = COLUMN_PRICE) {
+  return columns.map((col) => {
+    const wins = [], tiers = {}; let total = 0, knownAll = true;
+    const ms = new Set(col.main), es = new Set(col.euro);
+    for (const d of draws) {
+      const m = d.main.filter((n) => ms.has(n)).length, e = d.euro.filter((n) => es.has(n)).length, tier = `${m}+${e}`;
+      if (tier === GREEK_TIER && country !== "GR") continue;
+      let prize, known;
+      if (d.details) {
+        const c = (d.details.classes || []).find((x) => x.tier === tier);
+        if (!c || !((c.prize || 0) > 0)) continue;
+        prize = Number(c.prize); known = true;
+      } else { if (!TIERS.includes(tier)) continue; prize = 0; known = false; knownAll = false; }
+      wins.push({ date: d.date, tier, prize: round(prize, 2), known });
+      tiers[tier] = (tiers[tier] || 0) + 1; total += prize;
+    }
+    const best = [...TIERS, GREEK_TIER].find((t) => tiers[t]) || null;
+    return { draws: draws.length, cost: round(draws.length * price, 2), wins, tiers, best_tier: best, total_prize: round(total, 2), complete: knownAll, draws_with_win: wins.length };
+  });
+}
+export function analyze(columns, draws, st, price, country = "") {
+  const probs = tierProbabilities(country), avg = averagePrizes(draws);
+  const pAny = Object.values(probs).reduce((a, b) => a + b, 0);
+  const evCol = Object.entries(probs).filter(([t]) => t !== "5+2").reduce((a, [t, p]) => a + p * (avg[t] || 0), 0);
+  const n = columns.length, bt = backtest(columns, draws, country, price);
+  const cols = columns.map((c, i) => ({ main: sortNum(c.main), euro: sortNum(c.euro), profile: profile(c, st), backtest: bt[i], p_any: pAny, odds_any: round(1 / pAny, 1) }));
+  const pTicket = 1 - (1 - pAny) ** n, pJackpot = n * probs["5+2"], cost = round(n * price, 2), ev = round(n * evCol, 2);
+  return {
+    columns: cols,
+    overall: { columns: n, price, cost, p_any: pTicket, odds_any: round(1 / pTicket, 1), p_jackpot: pJackpot, odds_jackpot: Math.round(1 / pJackpot),
+      expected_prize: ev, expected_net: round(ev - cost, 2), ev_per_column: round(evCol, 4),
+      tiers: Object.keys(probs).map((t) => ({ tier: t, p: probs[t], odds: round(1 / probs[t], 1), avg_prize: round(avg[t] || 0, 2) })),
+      backtest: { draws: draws.length, cost: round(bt.reduce((a, b) => a + b.cost, 0), 2), total_prize: round(bt.reduce((a, b) => a + b.total_prize, 0), 2), columns_with_win: bt.filter((b) => b.wins.length).length } },
+    country,
+  };
+}
