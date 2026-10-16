@@ -9,6 +9,8 @@ An app for **Windows** (portable), **Mac**, **iPhone / iPad** and **Android** th
 - shows the **next draw with a countdown**,
 - builds tickets of 1-12 columns (price per column set per country, editable) with 7 algorithms or an automatic choice,
 - **keeps a history of your tickets and checks them automatically as soon as the draw is out**, with the prize amount and your overall result,
+- lets you build **your own ticket** and **analyses** it (odds, expected cost and prize, a check against the whole history),
+- **syncs your tickets** between your devices and Home Assistant (a private gist in your GitHub account),
 - exports/imports your data (JSON, CSV) and updates itself from GitHub with one click.
 
 Greek / English / German, dark / light theme, window or full screen (F11).
@@ -89,6 +91,24 @@ In the **Draws** menu you first see the **“Next draw”** box with the date an
 5. At the bottom you see that the ticket was **saved to your history** for the next draw (you can pick another date). If you really play it, press **“I played it”**.
    As long as it is not marked as played, generating again replaces the suggestion instead of filling the history.
 
+#### Your own ticket
+At the top of the **Ticket** tab choose **“My own ticket”** instead of “Automatic”. A board with the numbers 1-50 and 1-12 appears:
+
+![My own ticket](docs/images/13-manual-ticket-en.png)
+
+1. Tap **5 numbers** and **2 Euro numbers**. The board does not let you pick more.
+2. **Fill randomly** picks numbers for you, **Clear** empties the selection. Press **Add column**: the column goes into the list “Columns of the ticket”, where you can edit or delete it. Up to 12 columns.
+3. Press **Save ticket**. It goes into **My tickets** for the next draw, and if you really play it press **“I played it”**. **Analysis and history check** opens the analysis.
+
+#### Ticket analysis
+The **Analysis** button (on your own ticket and on every ticket in My tickets) opens:
+
+![Ticket analysis](docs/images/14-analysis-en.png)
+
+- **Whole ticket**: cost per draw, chance of some prize, jackpot chance (5 + 2) and the **expected prize** (without the jackpot), based on the real prizes since 2022. The odds per class are **exact** (calculated mathematically, not estimated).
+- **Every column**: a statistical profile (frequency and gap of the numbers, odd/even, low/high, sum) and a **history check**: in how many of the draws since 2012 it would have won and how much in total.
+- It is **statistics for information, not a prediction**: draws are random, every column has exactly the same chances and the past does not predict the future. The analysis says so too.
+
 > Draws are random. Statistics are informational and do not improve your odds. Play responsibly (18+).
 
 ### 6. My tickets: history and prize check
@@ -101,6 +121,8 @@ The **My tickets** tab lists every ticket you made, newest first:
 - **Filters**: All, Played, Pending, Winners. Click the date to open the draw details.
 - The amounts come from the real prizes of the draw. The **1 + 1** class (€0.50 add-on) pays €2.50 and exists only for draws since 8 March 2024.
 - The ticket history is **included in the JSON export** and loads together with the draws on another PC.
+- **Analysis**: the “Analysis” button on every ticket shows the odds, expected cost/prize and a history check (see above).
+- **Sync** of the tickets between your devices: see “Ticket sync” in Settings.
 
 ### 7. Settings: country, language, price, theme, data, export and import
 ![Settings](docs/images/04-settings-en.png)
@@ -120,6 +142,15 @@ The **country**, **language** (Greek / English / German) and **theme** (dark / l
 - **Import from CSV / JSON**: choose a file or drop it in the box. It accepts the files the app itself exports and plain CSV with date + 5 numbers + 2 Euro numbers. Draws are merged without duplicates.
 - **Connection check**: tests every online source separately and shows the error. “Copy report” lets you send it for diagnosis.
 - **Check and install a new version** (bottom of the page): when a new version exists its changes are shown. “Install and restart” downloads the new zip from GitHub, verifies the SHA-256, replaces the files (the `data` folder with your data and tickets is left untouched) and reopens the app.
+
+#### Ticket sync
+To have the **same tickets** on your computer, phone and Home Assistant, use the **Ticket sync** section in Settings (in the picture above). The tickets are stored in a **private gist** in your own GitHub account, with no other server involved.
+
+1. Press **“Create a token on GitHub”** and sign in. The page opens with the **gist** permission already selected.
+2. Press **Generate token** at the bottom, copy the token and **paste it** into the app. Press **Connect**.
+3. Do the same, with **the same token**, on every device (and in Home Assistant, in the options of the integration).
+
+From then on every change to a ticket (new, “I played it”, delete) syncs by itself a few seconds later, and when the app starts. If you change the same ticket on two devices the most recent change wins. The token stays **only on the device** and only gives access to gists. You can revoke it at any time on GitHub (Settings → Developer settings → Tokens).
 
 ### 8. If the online update does not work
 The app **never blocks**. It has the history built in, so it always opens with data. If there is no data at all, a screen appears where you can **load a draws file manually** (button or drag & drop), try again or run the **Connection check**.
@@ -154,13 +185,16 @@ The same app also works on your phone, with no account: statistics, ticket gener
 1. From the **Releases** page download **`EuroJackpotApp-android.apk`**.
 2. Open it. The first time Android asks you to allow **“Install from this source”** for the browser or file manager you used.
 3. If Google Play Protect warns about an “unknown developer” (the app is not on the Play Store): **More details → Install anyway**.
-4. **Updating**: Settings → Application → “Check for new version”. When there is one, download the new APK and install it over the old one. Your data stays.
+4. **Updating from inside the app**: Settings → Application → “Check for new version”. When there is one, press **“Install and restart”**: the app downloads the new APK, verifies the SHA-256 and opens the Android installer, where you confirm. The first time Android asks you to allow the app to **install updates** (it opens the right settings page), then you press the button again. Your data stays.
 5. Backup: Settings → Export data. The share sheet opens, where you can save the file e.g. to Google Drive.
 6. Do not want an APK? Open https://vezrevoulis.github.io/EuroJackpot-Analyzer/ in **Chrome** and choose **⋮ → Add to Home screen**.
 
 ![The app on an Android phone](docs/images/phone-android-en.png)
 
-> The screenshots show the app at iPhone and Android screen sizes. The phone app does everything the desktop app does, except installing a new version from inside the app (on the iPhone it updates by itself, on Android you install a new APK).
+> The screenshots show the app at iPhone and Android screen sizes. The phone app does everything the desktop app does, and the new version installs from inside the app on Android (on the iPhone it updates by itself).
+
+### 12. Home Assistant
+There is also a **Home Assistant integration** (HACS): sidebar panel, dashboard cards, sensors, ticket generator and analysis, **notifications** (new draw, high jackpot, the result of your tickets) and the same tickets as the apps through the sync. Installation guide: **https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA**
 
 ---
 

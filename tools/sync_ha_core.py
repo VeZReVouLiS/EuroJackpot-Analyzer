@@ -1,4 +1,4 @@
-"""Copy the pure-Python core (rules, stats, generators) and a compact numbers-only history into the
+"""Copy the pure-Python core (rules, stats, generators, evaluation, analysis, ticket sync) and a compact numbers-only history into the
 Home Assistant integration repo, so both projects use identical logic.
 
 Usage:  python -m tools.sync_ha_core C:\\path\\to\\EuroJackpot-Analyzer-HA
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 APP = Path(__file__).resolve().parent.parent / "app"
-CORE_FILES = ["rules.py", "stats.py", "generators.py"]
+CORE_FILES = ["rules.py", "stats.py", "generators.py", "evaluation.py", "analysis.py", "ticket_sync.py", "tls.py"]
 
 
 def main(ha_repo: str) -> None:
@@ -25,7 +25,13 @@ def main(ha_repo: str) -> None:
         (core / name).write_text("# Vendored copy of EuroJackpot-Analyzer/app/" + name + " - edit it there.\n" + text,
                                  encoding="utf-8")
     seed = json.loads((APP / "seed" / "draws.json").read_text(encoding="utf-8"))
-    compact = [[d["date"], d["main"], d["euro"]] for d in seed["draws"]]
+    compact = []
+    for d in seed["draws"]:
+        row = [d["date"], d["main"], d["euro"]]
+        prizes = {c["tier"]: c["prize"] for c in (d.get("details") or {}).get("classes", []) if c.get("prize", 0) > 0}
+        if prizes:                       # the prize per class: needed for the ticket results and the analysis
+            row.append(prizes)
+        compact.append(row)
     out = comp / "data" / "draws.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps({"version": 1, "draws": compact}, separators=(",", ":")), encoding="utf-8")
