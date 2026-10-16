@@ -7,7 +7,7 @@ An app for **Windows** (portable), **Mac**, **iPhone / iPad** and **Android** th
 - shows statistics with charts (frequency, overdue numbers, odd/even, sum, pairs),
 - shows the winners and prizes of every draw **the way they are presented in your country** (Greece or Germany) and where the top prizes were won,
 - shows the **next draw with a countdown**,
-- builds tickets of 1–12 columns (price per column set per country, editable) with 7 algorithms or an automatic choice,
+- builds tickets of 1-12 columns (price per column set per country, editable) with 7 algorithms or an automatic choice,
 - **keeps a history of your tickets and checks them automatically as soon as the draw is out**, with the prize amount and your overall result,
 - exports/imports your data (JSON, CSV) and updates itself from GitHub with one click.
 
@@ -52,12 +52,12 @@ On the first start the **“Choose your country”** screen appears, with the fl
 ### 3. Statistics
 The start screen shows the latest draw and the statistics of all draws.
 - **Period**: choose All, 10, 5, 3, 1 years or the last 100 / 50 draws.
-- **Frequency**: bars for the main numbers (1–50) or the Euro numbers. Hover a bar to see the percentage and how overdue the number is.
+- **Frequency**: bars for the main numbers (1-50) or the Euro numbers. Hover a bar to see the percentage and how overdue the number is.
 - **Most frequent / Least frequent / Most overdue**: the top 7 main numbers and 3 Euro numbers of each list.
 - **Overdue map**: each cell shows the number and how many draws have passed since it last appeared (redder = more overdue).
 - Odd/even and low/high charts, the sum distribution and the most common pairs.
 
-> The Euro numbers pool changed over time (1–8, 1–10 from 10/2014, 1–12 from 3/2022). The statistics only count draws in which the number existed.
+> The Euro numbers pool changed over time (1-8, 1-10 from 10/2014, 1-12 from 3/2022). The statistics only count draws in which the number existed.
 
 ### 4. Draws and details
 In the **Draws** menu you first see the **“Next draw”** box with the date and time (in your country's time) and a **countdown** `DD : HH : MM : SS` (days, hours, minutes, seconds). Below it are the latest 100 draws:
@@ -73,16 +73,16 @@ In the **Draws** menu you first see the **“Next draw”** box with the date an
 - The **1 + 1** class exists only in Greece.
 - For the other classes the sources only give the total of all countries and Greece.
 
-**With Germany as your country** the draw is shown like on the official eurojackpot.com: *Class* (I–XII), *Match* (e.g. “5 + 2”), *Winners* (e.g. “7 ×”) and *Prize per winner*, plus the total sales and fields. Classes that were won have a green background, as in the Greek layout. Below the table, **“Where the winners are”** shows in which country (and, for Germany, in which federal state) the winners were found. The official source gives this information **for the top 3 classes only**.
+**With Germany as your country** the draw is shown like on the official eurojackpot.com: *Class* (I-XII), *Match* (e.g. “5 + 2”), *Winners* (e.g. “7 ×”) and *Prize per winner*, plus the total sales and fields. Classes that were won have a green background, as in the Greek layout. Below the table, **“Where the winners are”** shows in which country (and, for Germany, in which federal state) the winners were found. The official source gives this information **for the top 3 classes only**.
 
 ![Draw with the German layout](docs/images/10-draw-details-de-en.png)
 
 ### 5. Building a ticket
 ![Ticket](docs/images/03-ticket-en.png)
 
-1. Choose **1–12 columns** with the − / + buttons.
+1. Choose **1-12 columns** with the − / + buttons.
 2. Choose an **algorithm**:
-   - *Automatic – one random algorithm per ticket*, or *a random algorithm per column*.
+   - *Automatic - one random algorithm per ticket*, or *a random algorithm per column*.
    - *Pure random, Hot numbers, Cold numbers, Overdue numbers, Frequency-weighted, Balanced, Smart shape (odd/even, sum)*.
 3. Press **Generate ticket**. Next to every column you see the algorithm that created it and its price (€2.50 in Greece, €2.00 in Germany, or the price you set in Settings). Below is the **ticket total**.
 4. 🔒 locks a column you like, 🔄 regenerates only that one, and **Copy** puts the whole ticket on the clipboard as text.

@@ -37,7 +37,7 @@ const ready = () => new Promise(res => {
 
 const tr = (k, vars = {}) => (S.t[k] ?? k).replace(/\{(\w+)\}/g, (_, v) => vars[v] ?? "");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const fmtDate = iso => { if (!iso) return "—"; const [y, m, d] = iso.slice(0, 10).split("-"); return `${d}/${m}/${y}`; };
+const fmtDate = iso => { if (!iso) return "-"; const [y, m, d] = iso.slice(0, 10).split("-"); return `${d}/${m}/${y}`; };
 const fmtDT = iso => iso ? `${fmtDate(iso)} ${iso.slice(11, 16)}` : tr("top.never");
 const LOC = { el: "el-GR", en: "en-GB", de: "de-DE" };
 const loc = () => LOC[S.settings.lang] || "en-GB";
@@ -314,16 +314,16 @@ async function openDraw(dateStr) {
   if (det && official) {         // as on the official eurojackpot.com page: class, match, winners, prize
     const rows = cls.filter(x => !x.greek_only).map((x, i) => `<tr class="${x.winners > 0 ? "gr-win" : ""}"><td><b>${ROMAN[i]}</b></td><td>${esc(matchText(x.tier))}</td>
       <td class="num">${x.winners ? nf(x.winners) + " ×" : `<span class="muted">${tr("detail.no_winner")}</span>`}</td>
-      <td class="num">${x.prize > 0 ? money(x.prize) : `<span class="muted">—</span>`}</td></tr>`).join("");
+      <td class="num">${x.prize > 0 ? money(x.prize) : `<span class="muted">-</span>`}</td></tr>`).join("");
     table = `<table><thead><tr><th>${tr("detail.class")}</th><th>${tr("detail.match")}</th><th class="num">${tr("detail.winners")}</th><th class="num">${tr("detail.prize")}</th></tr></thead><tbody>${rows}</tbody></table>`;
   } else if (det) {              // Greek (Allwyn) layout: all countries / Greece / others
     const rows = cls.map(x => {
       const other = (x.winners_gr != null && !x.greek_only) ? x.winners - x.winners_gr : null;
-      const prize = x.prize > 0 ? money(x.prize) : `<span class="muted">${x.winners ? "—" : tr("detail.no_winner")}</span>`;
+      const prize = x.prize > 0 ? money(x.prize) : `<span class="muted">${x.winners ? "-" : tr("detail.no_winner")}</span>`;
       return `<tr class="${x.winners_gr > 0 ? "gr-win" : ""}"><td><b>${esc(x.tier.replace("+", " + "))}</b>${x.greek_only ? `<span class="tag-gr">${tr("detail.greek_only")}</span>` : ""}</td>
-        <td class="num">${x.greek_only ? "—" : nf(x.winners)}</td>
-        <td class="num">${x.winners_gr != null ? nf(x.winners_gr) : "—"}</td>
-        <td class="num">${other != null ? nf(other) : "—"}</td><td class="num">${prize}</td></tr>`;
+        <td class="num">${x.greek_only ? "-" : nf(x.winners)}</td>
+        <td class="num">${x.winners_gr != null ? nf(x.winners_gr) : "-"}</td>
+        <td class="num">${other != null ? nf(other) : "-"}</td><td class="num">${prize}</td></tr>`;
     }).join("");
     table = `<table><thead><tr><th>${tr("detail.tier")}</th><th class="num">${tr("detail.winners_all")}</th><th class="num">${tr("detail.winners_gr")}</th><th class="num">${tr("detail.winners_other")}</th><th class="num">${tr("detail.prize")}</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
@@ -368,7 +368,7 @@ async function renderStats() {
       <div class="card"><h3>${tr("stats.lowhigh")}</h3><div class="chart-box sm"><canvas id="ch-low"></canvas></div></div>
     </div>
     <div class="grid g2">
-      <div class="card"><h3>${tr("stats.sums")} <span class="muted small">· ${tr("stats.avg_sum")}: ${st.sum_avg ?? "—"}</span></h3><div class="chart-box sm"><canvas id="ch-sum"></canvas></div></div>
+      <div class="card"><h3>${tr("stats.sums")} <span class="muted small">· ${tr("stats.avg_sum")}: ${st.sum_avg ?? "-"}</span></h3><div class="chart-box sm"><canvas id="ch-sum"></canvas></div></div>
       <div class="card"><h3>${tr("stats.pairs")}</h3><div class="pairs">${st.top_pairs.map(p =>
         `<div class="pair">${p.pair.map(n => ball(n, "sm")).join("")}<span class="cnt">${p.count}×</span></div>`).join("")}</div></div>
     </div>`;
@@ -413,7 +413,7 @@ function drawCharts(st) {
   pie("ch-odd", st.odd_even.map(x => tr("stats.lbl.oddeven", { a: x.odd, b: x.even })), st.odd_even.map(x => x.count), palette);
   pie("ch-low", st.low_high.map(x => tr("stats.lbl.lowhigh", { a: x.low, b: x.high })), st.low_high.map(x => x.count), palette);
   const sh = st.sum_hist.filter(x => x.from >= 40 && x.from <= 220);
-  chart("ch-sum", { type: "bar", data: { labels: sh.map(x => `${x.from}–${x.from + 9}`), datasets: [{ data: sh.map(x => x.count), backgroundColor: c2, borderRadius: 6 }] },
+  chart("ch-sum", { type: "bar", data: { labels: sh.map(x => `${x.from}-${x.from + 9}`), datasets: [{ data: sh.map(x => x.count), backgroundColor: c2, borderRadius: 6 }] },
     options: { ...chartBase(), plugins: { legend: { display: false } }, scales: { x: axis(), y: axis() } } });
 }
 
@@ -518,7 +518,7 @@ function ticketCard(t) {
     : `<span class="status-chip">${tr("mt.nowin")}</span>`;
   const cols = t.columns.map((c, i) => {
     const rc = r ? r.columns[i] : null;
-    const prize = !rc ? "" : rc.wins ? `<span class="prize win">${rc.known ? money(rc.prize) : "?"}</span>` : `<span class="prize">—</span>`;
+    const prize = !rc ? "" : rc.wins ? `<span class="prize win">${rc.known ? money(rc.prize) : "?"}</span>` : `<span class="prize">-</span>`;
     return `<div class="col-row ${rc && rc.wins ? "winner" : ""}"><span class="col-no">${tr("ticket.column")} ${i + 1}</span>${ticketBalls(c, rc)}
       ${rc ? `<span class="col-tag">${rc.tier.replace("+", " + ")}</span>` : `<span class="col-tag">${tr("algo.short." + c.algo)}</span>`}<span class="col-price">${prize}</span></div>`;
   }).join("");
@@ -629,7 +629,7 @@ function readFile(file, cb) {
   fr.readAsText(file);
 }
 
-/* ---------- application updates (GitHub releases) – separate from draw updates ---------- */
+/* ---------- application updates (GitHub releases) - separate from draw updates ---------- */
 async function doAppCheck() {
   const out = $("#app-upd-out"); if (out) out.innerHTML = `<div class="muted" style="padding:.8rem 0">${tr("app.checking")}</div>`;
   S.appUpdate = await call("check_app_update");

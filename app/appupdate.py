@@ -49,7 +49,7 @@ def _open(url: str, timeout: int = 30):
 
 
 def pick_assets(release: dict, repo: str) -> tuple[str | None, str | None]:
-    """Return (zip_url, sha256_url) – only URLs that belong to this repo's releases are accepted."""
+    """Return (zip_url, sha256_url) - only URLs that belong to this repo's releases are accepted."""
     prefix = f"https://github.com/{repo}/releases/download/"
     zip_url = sha_url = None
     for a in release.get("assets", []):
