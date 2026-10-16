@@ -1,20 +1,20 @@
 # Progress
 
 ## >>> ΠΟΥ ΕΧΟΥΜΕ ΜΕΙΝΕΙ (συνέχεια από το σπίτι) <<<
-App: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer — release **v1.3.2** (Windows zip + **Mac zips arm64/intel** μέσω GitHub Actions).
-Home Assistant: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA — release **v0.4.2**, εγκατεστημένο στο ha.dosman.gr (HACS update + reload της ενσωμάτωσης, χωρίς επανεκκίνηση). Η γλώσσα προφίλ του χρήστη στο HA είναι English (επαναφέρθηκε μετά τα screenshots).
+App: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer — release **v1.4.0**: Windows zip, Mac zips (arm64/intel), **Android APK**, και **web app (PWA) στο GitHub Pages**: https://vezrevoulis.github.io/EuroJackpot-Analyzer/ (iPhone: Safari → Προσθήκη στην οθόνη Αφετηρίας).
+Home Assistant: https://github.com/VeZReVouLiS/EuroJackpot-Analyzer-HA — release **v0.4.2**, εγκατεστημένο στο ha.dosman.gr.
 
-**Έγιναν:** χώρα/γλώσσα (GR/DE, el/en/de, splash, dropdowns με σημαίες), Γερμανία με «πού κερδήθηκε», αντίστροφη μέτρηση, νέο εικονίδιο (αστέρι+€, σκούρο φόντο), κάρτα τελευταίας κλήρωσης HA με εικονίδιο κληρωτηρίου, README.md + README.en.md σε app και HA με screenshots ελληνικά + αγγλικά, χωρίς scrollbars στο app, **Mac έκδοση**.
-**Mac:** `paths.py` (δεδομένα στο ~/Library/Application Support/EuroJackpot Analyzer), `appupdate.py` (αυτο-ενημέρωση .app με ditto + sh script), `build/build_mac.sh`, `build/icon.icns`, `.github/workflows/mac.yml` (macos-latest arm64 + macos-15-intel: tests, PyInstaller .app, ad-hoc codesign, `--selftest`, upload στο release). **Δεν έχει δοκιμαστεί σε πραγματικό Mac** (το CI αποδεικνύει build + εκκίνηση χωρίς παράθυρο· το WKWebView παράθυρο, το Gatekeeper και η αυτο-ενημέρωση θέλουν δοκιμή από τον χρήστη).
-**Κανόνες:** (1) αλλαγές στον κοινό πυρήνα/κατάλογο χωρών → sync στο HA repo (hook + `tools/sync_ha.ps1`· προσοχή: κάνει `git add -A` στο HA repo)· (2) μικρές διορθώσεις στο changelog = «Bug fixes / μικρές διορθώσεις»· (3) ελληνικά ΧΩΡΙΣ all-caps, κεφαλαίο μόνο το πρώτο γράμμα (π.χ. «Κληρώσεις · Στατιστικά · Δελτία»)· (4) κάθε αλλαγή UI → ξαναβγάζουμε ΟΛΑ τα screenshots (ελληνικά + αγγλικά) και ενημερώνουμε README.md + README.en.md· (5) επιβεβαίωση χρήστη πριν επανεκκίνηση HA / αλλαγή ρυθμίσεων λογαριασμού· (6) το demo dashboard στο HA μένει.
-**HA ενημέρωση χωρίς επανεκκίνηση:** HACS download → `homeassistant.reload_config_entry` (entry 01M50J4M8BN61VMQ9QSKV805FB) → Ctrl+F5.
+**Κινητά (v1.4.0):** `web/core.js` (πύλη Python→JS: rules, stats, generators, evaluation, importer, exporter), `web/webapi.js` (το api.py στον browser, IndexedDB μέσω `web/store.js`), `web/boot.js` (+ service worker), `tools/build_site.py` → `site/` (UI + web/ + κληρώσεις + manifest + sw.js), `tools/update_web_data.py` (νέες κληρώσεις), `tools/make_golden.py` + `web/tests/` (ισοδυναμία Python↔JS: `node --test web/tests/core.test.mjs` στο CI, ή `web/tests/run.html` σε browser). Workflows: `web.yml` (tests + deploy Pages, κάθε πρωί 06:15 UTC και Τρί/Παρ 19:30–22:30 UTC), `android.yml` (Capacitor 7 → APK, υπογραφή από secrets, upload στο release), `mac.yml`, `android-keystore.yml` (έτρεξε μία φορά). Το keystore του Android υπάρχει ΜΟΝΟ ως secrets `ANDROID_KEYSTORE_B64` / `ANDROID_KEYSTORE_PASSWORD` + αντίγραφο στο `C:\Users\DimitrisSarlis\Projects\_secrets_eurojackpot` (εκτός git· κράτα αντίγραφο, αλλιώς οι ενημερώσεις APK θέλουν απεγκατάσταση).
+UI κινητού: κάτω μενού ≤760px, `--safe-top/--safe-bottom`, hash `#safe=50` και `#static=1` για screenshots, `#demo=1` δημιουργεί demo δελτία. Screenshots κινητού: `scratchpad/cdp_shots.py` (Edge DevTools, 390x844 / 412x915 @2x) → `docs/images/phone-iphone(-en).png`, `phone-android(-en).png`.
+**Δεν έχει δοκιμαστεί σε πραγματικό iPhone/Android/Mac.** Γνωστό: στο CI το Allwyn μπορεί να μπλοκάρει, οπότε οι νέες κληρώσεις στο web έχουν επίσημα στοιχεία αλλά όχι ελληνικούς νικητές.
+**Κανόνες:** (1) αλλαγές στον κοινό πυρήνα/κατάλογο χωρών → sync στο HA repo (hook + `tools/sync_ha.ps1`)· (2) μικρές διορθώσεις στο changelog = «Bug fixes / μικρές διορθώσεις»· (3) ελληνικά ΧΩΡΙΣ all-caps· (4) κάθε αλλαγή UI → ξαναβγάζουμε ΟΛΑ τα screenshots (ελληνικά + αγγλικά) και ενημερώνουμε README.md + README.en.md· (5) επιβεβαίωση χρήστη πριν επανεκκίνηση HA / αλλαγή ρυθμίσεων λογαριασμού· (6) το demo dashboard στο HA μένει.
 
 **Επόμενα βήματα:**
-1. Δοκιμή της Mac έκδοσης σε πραγματικό Mac και διορθώσεις (παράθυρο, εικονίδιο, αυτο-ενημέρωση, ελληνικά/γερμανικά).
+1. Δοκιμή σε πραγματικό iPhone / Android / Mac και διορθώσεις.
 2. Περισσότερες χώρες/γλώσσες (υποδομή: `countries.json` + locale + layout στο `openDraw()`).
-3. Allwyn login/παιχνίδι (app + HA), υπογραφή exe/app (SmartScreen, Gatekeeper).
+3. Allwyn login/παιχνίδι, υπογραφή exe/app (SmartScreen, Gatekeeper), προαιρετικά App Store / Google Play.
 
-Δοκιμή app: `.venv\Scripts\python run.py` (ή `--browser`), tests: `.venv\Scripts\python -m pytest -q` (64). Release app: bump `app/version.py` + `CHANGELOG.md`, `powershell -ExecutionPolicy Bypass -File buildelease.ps1 -SkipSeed` (το workflow Mac προσθέτει μόνο του τα zip).
+Δοκιμή app: `.venv\Scripts\python run.py`, tests: `.venv\Scripts\python -m pytest -q` (67). Release: bump `app/version.py` + `CHANGELOG.md`, `powershell -ExecutionPolicy Bypass -File build\release.ps1 -SkipSeed` (τα workflows Mac/Android προσθέτουν μόνα τους τα αρχεία).
 ## Done
 - [x] M1 skeleton, venv (.venv), deps
 - [x] M2 db.py, sources/official.py (998 draws 2012->2026-10-13 in ~28s), updater.py
