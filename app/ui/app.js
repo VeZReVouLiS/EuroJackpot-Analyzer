@@ -811,13 +811,14 @@ async function installApp(btn) {
   btn.disabled = true;
   const box = $("#app-prog");
   const st = await call("start_app_update");
+  if (st.needs_permission) { box.textContent = tr("app.android_permission"); btn.disabled = false; return; }
   if (st.error) { box.textContent = tr("app.check_error", { err: st.error }); btn.disabled = false; return; }
   const iv = setInterval(async () => {
     const p = await call("get_app_update_progress");
     const pct = p.total ? Math.round(100 * p.done / p.total) : 0;
-    box.textContent = p.restart ? tr("app.restarting") : tr("app.installing", { pct });
+    box.textContent = p.installing ? tr("app.android_installing") : p.restart ? tr("app.restarting") : tr("app.installing", { pct });
     if (p.error) { clearInterval(iv); box.textContent = tr("app.check_error", { err: p.error }); btn.disabled = false; }
-    else if (!p.running && !p.restart) clearInterval(iv);
+    else if (!p.running && !p.restart) { clearInterval(iv); if (p.installing) btn.disabled = false; }
   }, 400);
 }
 

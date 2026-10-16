@@ -291,5 +291,7 @@
   "sync.now": "Jetzt synchronisieren",
   "sync.disconnect": "Trennen",
   "sync.done": "{tickets} Scheine synchronisiert ({added} neu, {updated} aktualisiert, {removed} gelöscht).",
-  "sync.error": "Synchronisierung fehlgeschlagen: {err}"
+  "sync.error": "Synchronisierung fehlgeschlagen: {err}",
+  "app.android_permission": "Erlaube der App, Updates zu installieren (auf der geöffneten Seite), und tippe erneut auf „Installieren und neu starten“.",
+  "app.android_installing": "Der Download ist fertig. Bestätige die Installation im Android-Fenster."
 }

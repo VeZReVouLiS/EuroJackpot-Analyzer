@@ -20,7 +20,8 @@ export async function createApi() {
   const store = await openStore();
   let draws = store.get("draws", []);
   let byDate = new Map(draws.map((d) => [d.date, d]));
-  let seedInfo = null;
+  let seedInfo = null, latestApk = null;
+  let appProgress = { running: false, done: 0, total: 0, error: null, restart: false };
   let progress = { running: false, done: 0, total: 0, error: null, errors: null, result: null };
   let catalogue = null;
   const locales = new Map();
@@ -348,6 +349,10 @@ export async function createApi() {
           if (!r.ok) { res.error = `HTTP ${r.status}`; return res; }
           const rel = await r.json();
           res.latest = String(rel.tag_name || "").replace(/^v/, ""); res.newer = isNewer(res.latest, VERSION); res.notes = rel.body || ""; res.url = rel.html_url;
+          const asset = (n) => (rel.assets || []).find((a) => a.name === n);
+          const apk = asset("EuroJackpotApp-android.apk"), sha = asset("EuroJackpotApp-android.apk.sha256");
+          latestApk = apk && sha ? { apkUrl: apk.browser_download_url, shaUrl: sha.browser_download_url } : null;
+          res.installable = !!(latestApk && plugin("ApkInstaller"));
         } catch (e) { res.error = String(e.message || e); }
         return res;
       }
@@ -358,8 +363,22 @@ export async function createApi() {
       } catch (e) { res.latest = VERSION; }
       return res;
     },
-    async start_app_update() { return { error: "not available" }; },
-    async get_app_update_progress() { return { running: false, done: 0, total: 0, error: null, restart: false }; },
+    /* Android: download the new APK inside the app and hand it to the system installer (the user confirms) */
+    async start_app_update() {
+      const inst = plugin("ApkInstaller");
+      if (!isNative() || !inst || !latestApk) return { error: "not available" };
+      if (appProgress.running) return appProgress;
+      const can = await inst.canInstall();
+      if (!can.allowed) { await inst.openSettings(); return { running: false, done: 0, total: 0, error: null, restart: false, needs_permission: true }; }
+      appProgress = { running: true, done: 0, total: 0, error: null, restart: false, installing: false };
+      const handle = await inst.addListener("progress", (p) => { appProgress.done = p.done; appProgress.total = p.total; });
+      inst.downloadAndInstall(latestApk)
+        .then(() => { appProgress.running = false; appProgress.installing = true; })
+        .catch((e) => { appProgress.running = false; appProgress.error = String((e && e.message) || e); })
+        .finally(() => handle.remove());
+      return appProgress;
+    },
+    async get_app_update_progress() { return { ...appProgress }; },
     async open_url(url) {
       const b = plugin("Browser");
       if (isNative() && b) { await b.open({ url }); return true; }

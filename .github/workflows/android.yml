@@ -15,7 +15,7 @@ on:
         default: ""
   push:
     branches: [main]
-    paths: ["web/**", "tools/build_site.py", ".github/workflows/android.yml"]
+    paths: ["web/**", "app/ui/**", "app/locales/**", "tools/build_site.py", ".github/workflows/android.yml"]
 
 permissions:
   contents: write
@@ -48,6 +48,11 @@ jobs:
           cp -r ../site www
           npx cap add android
           npx cap sync android
+          # in-app update: native plugin + the permission to hand an APK to the installer
+          JAVA_DIR=android/app/src/main/java/io/github/vezrevoulis/eurojackpot
+          cp ../web/android-native/*.java $JAVA_DIR/
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n</manifest>#' android/app/src/main/AndroidManifest.xml
+          grep -c REQUEST_INSTALL_PACKAGES android/app/src/main/AndroidManifest.xml
           # launcher icon: our PNGs for every density (no adaptive icon, so the PNG is used everywhere)
           RES=android/app/src/main/res
           rm -rf $RES/mipmap-anydpi-v26
