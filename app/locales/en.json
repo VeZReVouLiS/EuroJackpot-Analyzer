@@ -277,5 +277,19 @@
   "an.hist_unknown": "For old draws without prize data the amount cannot be calculated.",
   "an.hist_all": "All columns together in history: winnings {won} for a cost of {cost}.",
   "an.assumption": "The expected prize is based on the average of the real prizes since 2022.",
-  "an.disclaimer": "An estimate for information only. Draws are random: every column has exactly the same chances and the past does not predict the future. This is not a prediction or a guarantee of winnings. Play responsibly (18+)."
+  "an.disclaimer": "An estimate for information only. Draws are random: every column has exactly the same chances and the past does not predict the future. This is not a prediction or a guarantee of winnings. Play responsibly (18+).",
+  "sync.title": "Ticket sync",
+  "sync.intro": "Have the same tickets on all your devices (computer, phone, Home Assistant). The tickets are stored in a private gist of your own GitHub account.",
+  "sync.steps": "Press “Create token” and sign in to GitHub.\nPress “Generate token” (the gist permission is already selected).\nCopy the token and paste it here.\nUse the same token on every device.",
+  "sync.create": "Create a token on GitHub",
+  "sync.token_ph": "Paste the token here",
+  "sync.connect": "Connect",
+  "sync.running": "Syncing…",
+  "sync.privacy": "The token stays only on this device and only gives access to gists. You can revoke it at any time on GitHub.",
+  "sync.connected": "Connected to GitHub",
+  "sync.last": "Last sync",
+  "sync.now": "Sync now",
+  "sync.disconnect": "Disconnect",
+  "sync.done": "Synced {tickets} tickets ({added} new, {updated} updated, {removed} deleted).",
+  "sync.error": "Sync failed: {err}"
 }

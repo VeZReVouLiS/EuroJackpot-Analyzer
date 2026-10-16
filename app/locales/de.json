@@ -277,5 +277,19 @@
   "an.hist_unknown": "Für alte Ziehungen ohne Gewinndaten kann der Betrag nicht berechnet werden.",
   "an.hist_all": "Alle Felder zusammen in der Historie: Gewinne {won} bei Kosten von {cost}.",
   "an.assumption": "Der erwartete Gewinn basiert auf dem Durchschnitt der tatsächlichen Gewinne seit 2022.",
-  "an.disclaimer": "Eine Schätzung nur zur Information. Die Ziehung ist zufällig: Jedes Feld hat genau die gleichen Chancen und die Vergangenheit sagt die Zukunft nicht voraus. Das ist weder eine Vorhersage noch eine Gewinngarantie. Spiele verantwortungsvoll (ab 18)."
+  "an.disclaimer": "Eine Schätzung nur zur Information. Die Ziehung ist zufällig: Jedes Feld hat genau die gleichen Chancen und die Vergangenheit sagt die Zukunft nicht voraus. Das ist weder eine Vorhersage noch eine Gewinngarantie. Spiele verantwortungsvoll (ab 18).",
+  "sync.title": "Schein-Synchronisierung",
+  "sync.intro": "Habe dieselben Scheine auf allen Geräten (Computer, Handy, Home Assistant). Die Scheine liegen in einem privaten Gist deines eigenen GitHub-Kontos.",
+  "sync.steps": "Klicke auf „Token erstellen“ und melde dich bei GitHub an.\nKlicke auf „Generate token“ (die Berechtigung gist ist schon ausgewählt).\nKopiere das Token und füge es hier ein.\nVerwende auf jedem Gerät dasselbe Token.",
+  "sync.create": "Token bei GitHub erstellen",
+  "sync.token_ph": "Token hier einfügen",
+  "sync.connect": "Verbinden",
+  "sync.running": "Synchronisiere …",
+  "sync.privacy": "Das Token bleibt nur auf diesem Gerät und gibt nur Zugriff auf Gists. Du kannst es jederzeit bei GitHub widerrufen.",
+  "sync.connected": "Mit GitHub verbunden",
+  "sync.last": "Letzte Synchronisierung",
+  "sync.now": "Jetzt synchronisieren",
+  "sync.disconnect": "Trennen",
+  "sync.done": "{tickets} Scheine synchronisiert ({added} neu, {updated} aktualisiert, {removed} gelöscht).",
+  "sync.error": "Synchronisierung fehlgeschlagen: {err}"
 }

@@ -43,6 +43,9 @@ export async function runChecks(loadJson) {
   const full = core.computeStats(draws);
   for (const [country, g] of Object.entries(gold.analysis)) check(`analysis[${country}]`, core.analyze(g.columns, draws, full, g.price, g.country), g.result);
 
+  // ticket sync merge
+  gold.sync.forEach((g, i) => { const r = core.mergeTickets(g.local, g.remote, g.tombs); check(`sync[${i}]`, { tickets: r.tickets, tombstones: r.tombstones }, g.result); });
+
   // round trip of the app's own export
   const exp = core.toJson(draws.slice(-5), [], "x"), back = core.parseText(exp, "x.json");
   check("export round trip", back.map((d) => [d.date, d.main, d.euro]), draws.slice(-5).map((d) => [d.date, d.main, d.euro]));

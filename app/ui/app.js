@@ -10,7 +10,29 @@ const ALGO_ORDER = ["auto_ticket", "auto_column", "random", "hot", "cold", "over
 
 // Browser/fallback mode (no native window): the local server hands us a secret token in the URL (?t=...)
 const TOKEN = new URLSearchParams(location.search).get("t") || "";
-async function call(name, ...args) {
+const TICKET_WRITES = new Set(["generate", "save_manual_ticket", "set_ticket_played", "set_ticket_target", "delete_ticket", "import_text"]);
+async function call(name, ...args) {         // every change of a ticket is synced a moment later (when sync is on)
+  const r = await rawCall(name, ...args);
+  if (TICKET_WRITES.has(name)) scheduleSync();
+  return r;
+}
+function scheduleSync() {
+  if (!S.info.sync) return;
+  clearTimeout(S.syncTimer);
+  S.syncTimer = setTimeout(() => runSync(true), 2500);
+}
+async function runSync(quiet) {
+  if (!S.info.sync || S.syncing) return null;
+  S.syncing = true;
+  try {
+    const r = await rawCall("sync_now");
+    if (r.added || r.updated || r.removed) { await refreshInfo(); if (S.view === "mytickets") renderMyTickets(); }
+    if (!quiet) toast(tr("sync.done", r));
+    return r;
+  } catch (e) { if (!quiet) toast(tr("sync.error", { err: e.message || String(e) })); return null; }
+  finally { S.syncing = false; }
+}
+async function rawCall(name, ...args) {
   if (window.EJ_WEBAPI) return window.EJ_WEBAPI[name](...args);       // web app (PWA) and Android app: the API runs in the page
   if (window.pywebview && window.pywebview.api) return window.pywebview.api[name](...args);
   const r = await fetch("/rpc", { method: "POST", headers: { "X-Token": TOKEN }, body: JSON.stringify({ name, args }) });
@@ -682,6 +704,9 @@ function renderSettings() {
         <div class="btn-row"><button id="diag" class="btn">🩺 ${tr("settings.diag.run")}</button></div><div id="diag-out" class="diag"></div></div>
     </div>
 
+    <div class="sect">🔄 ${tr("sync.title")}</div>
+    <div class="card" id="sync-card"></div>
+
     <div class="sect">⬆️ ${tr("settings.section.app")}</div>
     <div class="card">
       <div class="row"><div><div class="strong">${tr("app.version")}: v${S.info.version}</div><div class="muted small">${tr("app.distinction")}</div></div>
@@ -709,6 +734,32 @@ function renderSettings() {
   $("#diag").onclick = () => runDiagnostics($("#diag-out"));
   $("#app-check").onclick = () => doAppCheck();
   renderAppUpdate();
+  drawSync();
+}
+async function drawSync() {
+  const box = $("#sync-card"); if (!box) return;
+  const st = await call("sync_status");
+  if (!st.connected) {
+    box.innerHTML = `<div>${tr("sync.intro")}</div>
+      <ol class="about-list" style="margin:.8rem 0">${tr("sync.steps").split("\n").map(l => `<li>${esc(l)}</li>`).join("")}</ol>
+      <div class="btn-row"><button id="sync-create" class="btn">🔑 ${tr("sync.create")}</button></div>
+      <div class="sync-row"><input id="sync-token" type="password" autocomplete="off" spellcheck="false" placeholder="${tr("sync.token_ph")}"><button id="sync-connect" class="btn primary">${tr("sync.connect")}</button></div>
+      <div class="note">${tr("sync.privacy")}</div>`;
+    $("#sync-create").onclick = () => call("open_url", "https://github.com/settings/tokens/new?scopes=gist&description=EuroJackpot+Analyzer").catch(() => {});
+    $("#sync-connect").onclick = async () => {
+      const b = $("#sync-connect"); b.disabled = true; b.textContent = tr("sync.running");
+      try { const r = await rawCall("sync_connect", $("#sync-token").value); await refreshInfo(); toast(tr("sync.done", r)); }
+      catch (e) { toast(tr("sync.error", { err: e.message || String(e) })); }
+      drawSync();
+    };
+  } else {
+    box.innerHTML = `<div class="strong" style="color:var(--good)">✔ ${tr("sync.connected")}</div>
+      <div class="muted small" style="margin:.3rem 0 .8rem">${tr("sync.last")}: ${st.last ? fmtDT(st.last) : tr("top.never")}</div>
+      <div class="btn-row"><button id="sync-now" class="btn primary">🔄 ${tr("sync.now")}</button><button id="sync-off" class="btn">${tr("sync.disconnect")}</button></div>
+      <div class="note">${tr("sync.privacy")}</div>`;
+    $("#sync-now").onclick = async () => { const b = $("#sync-now"); b.disabled = true; await runSync(false); drawSync(); };
+    $("#sync-off").onclick = async () => { await rawCall("sync_disconnect"); await refreshInfo(); drawSync(); };
+  }
 }
 async function exportData(fmt) {
   try {
@@ -834,6 +885,7 @@ async function boot() {
   $("#detail").addEventListener("click", e => { if (e.target.id === "detail") closeDetail(); });
   window.addEventListener("keydown", e => { if (e.key === "F11") { e.preventDefault(); $("#btn-full").click(); } if (e.key === "Escape") { closeDetail(); closeAbout(); closeAnalysis(); } });
   window.addEventListener("resize", () => S.charts.forEach(c => c.resize()));
+  if (S.info.sync) runSync(true);                                 // bring the tickets of the other devices
   if (S.settings.check_app_updates && S.info.repo_configured) {     // quiet background check, shows a badge only
     call("check_app_update").then(r => { S.appUpdate = r; updateBadge(); }).catch(() => {});
   }

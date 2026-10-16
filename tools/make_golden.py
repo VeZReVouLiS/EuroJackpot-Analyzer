@@ -8,7 +8,7 @@ import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from app import analysis, evaluation, exporter, rules, stats
+from app import analysis, evaluation, exporter, rules, stats, ticket_sync
 from app.sources import importer
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -60,6 +60,22 @@ def main() -> None:
     full = stats.compute(draws)
     gold["analysis"] = {c: {"columns": acols, "price": 2.5 if c == "GR" else 2.0, "country": c,
                             "result": analysis.analyze(acols, draws, full, 2.5 if c == "GR" else 2.0, c)} for c in ("GR", "DE")}
+    def tk(uid, at, played=False, cols=None, created="2026-10-16T10:00:00"):
+        return {"uid": uid, "created_at": created, "target_date": "2026-10-20", "algo": "manual", "price": 2.5, "played": played, "updated_at": at,
+                "columns": cols or [{"main": [1, 2, 3, 4, 5], "euro": [1, 2], "algo": "manual"}]}
+    old = {"created_at": "2026-10-01T09:00:00", "target_date": "2026-10-06", "algo": "hot", "price": 5.0, "played": True,
+           "columns": [{"main": [7, 14, 21, 28, 35], "euro": [3, 9], "algo": "hot"}]}          # a ticket from before sync: no uid, no updated_at
+    gold["sync"] = []
+    for local, remote, tombs in [
+        ([tk("a", "2026-10-16T12:00:00.000Z", True), tk("b", "2026-10-16T09:00:00.000Z")],
+         ticket_sync.to_doc([tk("a", "2026-10-16T11:00:00.000Z"), tk("c", "2026-10-16T08:00:00.000Z")], {}), {}),
+        ([tk("a", "2026-10-16T09:00:00.000Z"), tk("b", "2026-10-16T13:00:00.000Z")],
+         ticket_sync.to_doc([], {"a": "2026-10-16T10:00:00.000Z", "b": "2026-10-16T10:00:00.000Z"}), {"c": "2026-10-16T01:00:00.000Z"}),
+        ([old], None, {}),
+        ([old], ticket_sync.to_doc([{**old, "uid": old["created_at"] + "|" + old["target_date"], "played": False, "updated_at": "2026-10-02T00:00:00.000Z"}], {}), {}),
+    ]:
+        merged, t = ticket_sync.merge(local, remote, tombs)
+        gold["sync"].append({"local": local, "remote": remote, "tombs": tombs, "result": {"tickets": merged, "tombstones": t}})
     gold["samples"] = SAMPLES
     for stamp in ("2026-10-13T10:00", "2026-10-13T21:14", "2026-10-13T21:15", "2026-10-16T22:00", "2022-03-25T09:00", "2022-03-28T12:00", "2026-12-31T08:30"):
         now = datetime.fromisoformat(stamp)

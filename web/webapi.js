@@ -5,10 +5,13 @@ import * as core from "./core.js";
 import { openStore } from "./store.js";
 import { VERSION, REPO, PAGES } from "./version.js";
 
-const DEFAULTS = { lang: "el", country: "", prices: {}, theme: "dark", auto_update: true, check_app_updates: true,
+const DEFAULTS = { lang: "el", country: "", prices: {}, sync_token: "", sync_gist: "", theme: "dark", auto_update: true, check_app_updates: true,
   period: "all", columns: 5, algo: core.AUTO_TICKET };
 const isNative = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 const plugin = (name) => (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) || null;
+const nowUtc = () => new Date().toISOString();                       // change times travel between devices: UTC with milliseconds
+const newUid = (created, target) => `${created}|${target}|${Math.floor(Math.random() * 65536).toString(16).padStart(4, "0")}`;
+const SYNC_FILE = "eurojackpot-tickets.json", SYNC_DESC = "EuroJackpot Analyzer tickets (synced)";
 const nowIso = () => { const n = new Date(), p = (x) => String(x).padStart(2, "0"); return `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`; };
 const isNewer = (a, b) => { const x = String(a).replace(/^v/, "").split(".").map(Number), y = String(b).replace(/^v/, "").split(".").map(Number);
   for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
@@ -135,7 +138,7 @@ export async function createApi() {
       return { count: draws.length, last_draw: draws.length ? draws[draws.length - 1].date : null, last_update: store.get("last_update", null),
         seed: seedInfo, settings: s, price: effectivePrice(s), default_price: defaultPrice(s.country), max_columns: core.MAX_COLUMNS,
         algos: core.ALGOS, euro_max: core.currentEuroMax(), version: VERSION, repo_configured: true,
-        unseen_wins: (await api.get_tickets()).unseen_wins, web: true, native: isNative() };
+        unseen_wins: (await api.get_tickets()).unseen_wins, sync: !!s.sync_token, web: true, native: isNative() };
     },
 
     /* draw data updates */
@@ -195,12 +198,13 @@ export async function createApi() {
       let tid, target, played = false;
       if (existing && !existing.played && !existing.result) {
         target = targetDate || existing.target_date;
-        Object.assign(existing, { columns: t.columns, algo, price: t.total, target_date: target });
+        Object.assign(existing, { columns: t.columns, algo, price: t.total, target_date: target, updated_at: nowUtc() });
         tid = existing.id;
       } else {
         target = targetDate || core.nextDrawDates(new Date(), 1)[0];
         tid = store.get("ticket_seq", 1); await store.set("ticket_seq", tid + 1);
-        all.push({ id: tid, created_at: nowIso(), target_date: target, algo, columns: t.columns, price: t.total, played: false, result: null, seen: false });
+        const created = nowIso();
+        all.push({ id: tid, uid: newUid(created, target), updated_at: nowUtc(), created_at: created, target_date: target, algo, columns: t.columns, price: t.total, played: false, result: null, seen: false });
       }
       await saveTickets(all);
       return { ...t, id: tid, target_date: target, played };
@@ -210,7 +214,8 @@ export async function createApi() {
       const target = targetDate || core.nextDrawDates(new Date(), 1)[0];
       if (!core.parseDate(target)) throw new Error("invalid date");
       const all = tickets(), tid = store.get("ticket_seq", 1); await store.set("ticket_seq", tid + 1);
-      const t = { id: tid, created_at: nowIso(), target_date: target, algo: "manual", columns: cols, price: r2(price * cols.length), played: false, result: null, seen: false };
+      const created = nowIso();
+      const t = { id: tid, uid: newUid(created, target), updated_at: nowUtc(), created_at: created, target_date: target, algo: "manual", columns: cols, price: r2(price * cols.length), played: false, result: null, seen: false };
       all.push(t); await saveTickets(all);
       return t;
     },
@@ -219,13 +224,70 @@ export async function createApi() {
       return core.analyze(cols, draws, core.computeStats(draws), effectivePrice(s), s.country || "");
     },
     async get_next_draws(n = 4) { return core.nextDrawDates(new Date(), Number(n)); },
-    async set_ticket_played(id, played) { const all = tickets(); const t = all.find((x) => x.id === Number(id)); if (t) { t.played = !!played; await saveTickets(all); } return t || null; },
+    async set_ticket_played(id, played) { const all = tickets(); const t = all.find((x) => x.id === Number(id)); if (t) { t.played = !!played; t.updated_at = nowUtc(); await saveTickets(all); } return t || null; },
     async set_ticket_target(id, target) {
       const all = tickets(); const t = all.find((x) => x.id === Number(id));
-      if (t && !t.result) { if (!core.parseDate(target)) throw new Error("invalid date"); t.target_date = target; await saveTickets(all); }
+      if (t && !t.result) { if (!core.parseDate(target)) throw new Error("invalid date"); t.target_date = target; t.updated_at = nowUtc(); await saveTickets(all); }
       return t || null;
     },
-    async delete_ticket(id) { await saveTickets(tickets().filter((x) => x.id !== Number(id))); return true; },
+    async delete_ticket(id) {
+      const gone = tickets().find((x) => x.id === Number(id));
+      if (gone) { const tombs = store.get("tombstones", {}); tombs[core.uidOf(gone)] = nowUtc(); await store.set("tombstones", tombs); }
+      await saveTickets(tickets().filter((x) => x.id !== Number(id))); return true;
+    },
+
+    /* ticket sync between devices through a private gist of the user */
+    async sync_status() { const s = settings(); return { connected: !!s.sync_token, gist: s.sync_gist || null, last: store.get("sync_last", null) }; },
+    async sync_connect(token) {
+      token = String(token || "").trim();
+      if (!token) throw new Error("token is empty");
+      await api.set_setting("sync_token", token); await api.set_setting("sync_gist", "");
+      try { return await api.sync_now(); } catch (e) { await api.set_setting("sync_token", ""); throw e; }
+    },
+    async sync_disconnect() { await api.set_setting("sync_token", ""); await api.set_setting("sync_gist", ""); return api.sync_status(); },
+    async sync_now() {
+      const s = settings();
+      if (!s.sync_token) throw new Error("not connected");
+      let gistId = s.sync_gist || null, remote = null;
+      const call = async (method, path, body) => {
+        let r;
+        try {
+          r = await fetch("https://api.github.com" + path, { method, headers: { Authorization: `Bearer ${s.sync_token.trim()}`, Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+        } catch (e) { throw new Error(`No connection to GitHub: ${e.message || e}`); }
+        if (r.status === 401) throw new Error("The GitHub token is not valid (401).");
+        if (r.status === 403) throw new Error("GitHub refused the request (403): the token needs the gist permission.");
+        if (r.status === 404 && gistId) throw new Error("The sync gist was not found (404). Disconnect and connect again.");
+        if (!r.ok) throw new Error(`GitHub error ${r.status}`);
+        return r.json();
+      };
+      if (!gistId) {
+        for (const g of (await call("GET", "/gists?per_page=100")) || []) if (g.files && g.files[SYNC_FILE]) { gistId = g.id; break; }
+        if (!gistId) { const g = await call("POST", "/gists", { description: SYNC_DESC, public: false, files: { [SYNC_FILE]: { content: JSON.stringify(core.syncDoc([], {})) } } }); gistId = g.id; }
+      }
+      const g = await call("GET", `/gists/${gistId}`), f = g.files && g.files[SYNC_FILE];
+      if (f) { if (f.truncated) throw new Error("The sync file is too large."); try { remote = f.content && f.content.trim() ? JSON.parse(f.content) : null; } catch { throw new Error("The sync file is damaged."); } }
+      const all = tickets(), tombs0 = store.get("tombstones", {});
+      const { tickets: merged, tombstones } = core.mergeTickets(all, remote, tombs0);
+      let added = 0, updated = 0, seq = store.get("ticket_seq", 1);
+      const byUid = new Map(all.map((t) => [core.uidOf(t), t])), next = [];
+      for (const m of merged) {
+        const cur = byUid.get(m.uid);
+        if (!cur) { next.push({ id: seq++, ...m, result: null, seen: false }); added++; }
+        else if (m.updated_at > (cur.updated_at || cur.created_at)) {
+          const reset = JSON.stringify(cur.columns) !== JSON.stringify(m.columns) || cur.target_date !== m.target_date;
+          next.push({ ...cur, ...m, id: cur.id, ...(reset ? { result: null, seen: false } : {}) }); updated++;
+        } else next.push(cur);
+      }
+      const removed = all.filter((t) => !merged.some((m) => m.uid === core.uidOf(t))).length;
+      await saveTickets(next); await store.set("ticket_seq", seq); await store.set("tombstones", tombstones);
+      const doc = core.syncDoc(merged, tombstones);
+      const pushed = !remote || JSON.stringify({ t: remote.tickets, d: remote.tombstones }) !== JSON.stringify({ t: doc.tickets, d: doc.tombstones });
+      if (pushed) await call("PATCH", `/gists/${gistId}`, { files: { [SYNC_FILE]: { content: JSON.stringify(doc) } } });
+      await api.set_setting("sync_gist", gistId); await store.set("sync_last", nowIso());
+      evaluateTickets();
+      return { added, updated, removed, pushed, tickets: merged.length, ...(await api.sync_status()) };
+    },
     async evaluate_tickets() { return evaluateTickets(); },
     async get_tickets() {
       const list = sortedTickets(), played = list.filter((t) => t.played), done = played.filter((t) => t.result);

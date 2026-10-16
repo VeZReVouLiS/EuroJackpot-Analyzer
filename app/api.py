@@ -8,7 +8,7 @@ import traceback
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import analysis, appupdate, countries, evaluation, exporter, generators, rules, stats, updater, version
+from . import analysis, appupdate, countries, evaluation, exporter, generators, rules, stats, ticket_sync, updater, version
 from .db import Database
 from .paths import resource_dir
 from .sources import allwyn, importer, official
@@ -18,6 +18,8 @@ DEFAULT_SETTINGS = {
     "lang": "el",
     "country": "",                # chosen on the splash screen ("" = not chosen yet)
     "prices": {},                 # price per column the user set, by country code
+    "sync_token": "",             # GitHub token (gist) for ticket sync between devices; "" = not connected
+    "sync_gist": "",              # id of the private gist that holds the synced tickets
     "theme": "dark",
     "auto_update": True,          # download new draws when the app starts
     "check_app_updates": True,    # look for a new app version (GitHub) when the app starts
@@ -87,6 +89,47 @@ class Api:
         path = resource_dir() / "locales" / f"{name}.json"
         return json.loads(path.read_text(encoding="utf-8"))
 
+    # ticket sync between devices (private gist of the user) -------------
+    def sync_status(self) -> dict:
+        s = self.get_settings()
+        return {"connected": bool(s.get("sync_token")), "gist": s.get("sync_gist") or None, "last": self._db.get_meta("sync_last")}
+
+    def sync_connect(self, token: str) -> dict:
+        token = (token or "").strip()
+        if not token:
+            raise ValueError("token is empty")
+        self.set_setting("sync_token", token)
+        self.set_setting("sync_gist", "")
+        try:
+            return self.sync_now()
+        except Exception:
+            self.set_setting("sync_token", "")
+            raise
+
+    def sync_disconnect(self) -> dict:
+        self.set_setting("sync_token", "")
+        self.set_setting("sync_gist", "")
+        return self.sync_status()
+
+    def sync_now(self) -> dict:
+        """Merge the local tickets with the gist (last change wins per ticket) and upload the result."""
+        s = self.get_settings()
+        if not s.get("sync_token"):
+            raise ValueError("not connected")
+        gist = ticket_sync.Gist(s["sync_token"], s.get("sync_gist") or None)
+        remote = gist.pull_or_create()
+        local = [ticket_sync.sync_view(t) for t in self._db.all_tickets()]
+        merged, tombs = ticket_sync.merge(local, remote, self._db.tombstones())
+        changed = self._db.apply_synced(merged, tombs)
+        doc = ticket_sync.to_doc(merged, tombs)
+        pushed = remote is None or {k: remote.get(k) for k in ("tickets", "tombstones")} != {"tickets": doc["tickets"], "tombstones": doc["tombstones"]}
+        if pushed:
+            gist.push(doc)
+        self.set_setting("sync_gist", gist.id)
+        self._db.set_meta("sync_last", datetime.now().isoformat(timespec="seconds"))
+        self.evaluate_tickets()
+        return {**changed, "pushed": pushed, "tickets": len(merged), **self.sync_status()}
+
     def get_countries(self) -> dict:
         return countries.catalogue()
 
@@ -106,6 +149,7 @@ class Api:
             "version": version.__version__,
             "repo_configured": bool(version.GITHUB_REPO),
             "unseen_wins": self.get_tickets()["unseen_wins"],
+            "sync": bool(self.get_settings().get("sync_token")),
         }
 
     # draw-data updating -----------------------------------------------

@@ -454,3 +454,27 @@ export function analyze(columns, draws, st, price, country = "") {
     country,
   };
 }
+
+/* ---------------------------------------------------------------- ticket sync (port of app/ticket_sync.py) */
+export const uidOf = (t) => t.uid || `${t.created_at}|${t.target_date}`;
+export function syncView(t) {
+  const out = {};
+  for (const k of ["uid", "created_at", "target_date", "algo", "columns", "price", "played", "updated_at"]) out[k] = t[k] === undefined ? null : t[k];
+  out.uid = uidOf(t); out.updated_at = t.updated_at || t.created_at; out.played = !!t.played;
+  return out;
+}
+/** Merge local tickets with the remote document: last change wins per ticket; deletions are remembered (tombstones). */
+export function mergeTickets(local, remote, localTombstones = {}) {
+  remote = remote || {};
+  const tombs = { ...(remote.tombstones || {}) };
+  for (const [uid, at] of Object.entries(localTombstones || {})) if (at > (tombs[uid] || "")) tombs[uid] = at;
+  const best = new Map();
+  for (const t of [...(remote.tickets || []), ...local.map(syncView)]) {
+    const u = syncView(t), cur = best.get(u.uid);
+    if (!cur || u.updated_at > cur.updated_at) best.set(u.uid, u);
+  }
+  const merged = [...best.entries()].filter(([uid, t]) => (tombs[uid] || "") < t.updated_at).map(([, t]) => t);
+  merged.sort((a, b) => (a.uid < b.uid ? -1 : a.uid > b.uid ? 1 : 0));
+  return { tickets: merged, tombstones: tombs };
+}
+export const syncDoc = (tickets, tombstones) => ({ format: "eurojackpot-analyzer-tickets", version: 1, tickets, tombstones });

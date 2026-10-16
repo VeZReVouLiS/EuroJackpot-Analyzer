@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import secrets
 import sqlite3
 import threading
+from datetime import datetime, timezone
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -26,9 +28,18 @@ CREATE TABLE IF NOT EXISTS tickets(
     price REAL,
     played INTEGER DEFAULT 0,
     result TEXT,
-    seen INTEGER DEFAULT 0
+    seen INTEGER DEFAULT 0,
+    uid TEXT,
+    updated_at TEXT
 );
+CREATE TABLE IF NOT EXISTS tombstones(uid TEXT PRIMARY KEY, deleted_at TEXT);
 """
+
+
+def _now() -> str:
+    """UTC, so that devices in different time zones compare change times correctly (ticket sync)."""
+    n = datetime.now(timezone.utc)
+    return n.strftime("%Y-%m-%dT%H:%M:%S.") + f"{n.microsecond // 1000:03d}Z"        # milliseconds, same as JavaScript toISOString()
 
 
 class Database:
@@ -42,6 +53,10 @@ class Database:
             cols = {r[1] for r in self._conn.execute("PRAGMA table_info(draws)")}
             if "details" not in cols:            # migrate databases created by v1.0
                 self._conn.execute("ALTER TABLE draws ADD COLUMN details TEXT")
+            tcols = {r[1] for r in self._conn.execute("PRAGMA table_info(tickets)")}
+            for name in ("uid", "updated_at"):    # ticket sync (v1.6)
+                if name not in tcols:
+                    self._conn.execute(f"ALTER TABLE tickets ADD COLUMN {name} TEXT")
             self._conn.commit()
 
     @contextmanager
@@ -122,6 +137,7 @@ class Database:
     def _ticket(r) -> dict:
         return {
             "id": r["id"], "created_at": r["created_at"], "target_date": r["target_date"], "algo": r["algo"],
+            "uid": r["uid"] or f"{r['created_at']}|{r['target_date']}", "updated_at": r["updated_at"] or r["created_at"],
             "columns": json.loads(r["columns"]), "price": r["price"], "played": bool(r["played"]),
             "result": json.loads(r["result"]) if r["result"] else None, "seen": bool(r["seen"]),
         }
@@ -129,8 +145,9 @@ class Database:
     def add_ticket(self, created_at: str, target_date: str, algo: str, columns: list[dict], price: float) -> int:
         with self._tx() as c:
             cur = c.execute(
-                "INSERT INTO tickets(created_at,target_date,algo,columns,price) VALUES(?,?,?,?,?)",
-                (created_at, target_date, algo, json.dumps(columns), price),
+                "INSERT INTO tickets(created_at,target_date,algo,columns,price,uid,updated_at) VALUES(?,?,?,?,?,?,?)",
+                (created_at, target_date, algo, json.dumps(columns), price,
+                 f"{created_at}|{target_date}|{secrets.token_hex(2)}", _now()),
             )
             return cur.lastrowid
 
@@ -142,6 +159,9 @@ class Database:
                 raise ValueError(k)
             sets.append(f"{k}=?")
             vals.append(json.dumps(v) if k in ("columns", "result") and v is not None else v)
+        if fields.keys() & {"target_date", "algo", "columns", "price", "played", "created_at"}:   # something that is synced changed
+            sets.append("updated_at=?")
+            vals.append(_now())
         with self._tx() as c:
             c.execute(f"UPDATE tickets SET {', '.join(sets)} WHERE id=?", (*vals, tid))
 
@@ -172,8 +192,42 @@ class Database:
         return added
 
     def delete_ticket(self, tid: int) -> None:
+        t = self.get_ticket(tid)
         with self._tx() as c:
             c.execute("DELETE FROM tickets WHERE id=?", (tid,))
+            if t:                                                   # remember the deletion so that sync does not bring it back
+                c.execute("INSERT OR REPLACE INTO tombstones VALUES(?,?)", (t["uid"], _now()))
+
+    def tombstones(self) -> dict[str, str]:
+        with self._lock:
+            return {r[0]: r[1] for r in self._conn.execute("SELECT uid, deleted_at FROM tombstones")}
+
+    def apply_synced(self, merged: list[dict], tombs: dict[str, str]) -> dict:
+        """Make the local tickets equal to the merged list (from ticket_sync.merge). Returns what changed."""
+        added = updated = removed = 0
+        local = {t["uid"]: t for t in self.all_tickets()}
+        with self._tx() as c:
+            for m in merged:
+                cur = local.get(m["uid"])
+                cols = json.dumps(m["columns"])
+                if cur is None:
+                    c.execute("INSERT INTO tickets(created_at,target_date,algo,columns,price,played,uid,updated_at) VALUES(?,?,?,?,?,?,?,?)",
+                              (m["created_at"], m["target_date"], m["algo"], cols, m["price"], int(bool(m["played"])), m["uid"], m["updated_at"]))
+                    added += 1
+                elif m["updated_at"] > cur["updated_at"]:
+                    reset = cur["columns"] != m["columns"] or cur["target_date"] != m["target_date"]
+                    c.execute("UPDATE tickets SET target_date=?, algo=?, columns=?, price=?, played=?, uid=?, updated_at=?"
+                              + (", result=NULL, seen=0" if reset else "") + " WHERE id=?",
+                              (m["target_date"], m["algo"], cols, m["price"], int(bool(m["played"])), m["uid"], m["updated_at"], cur["id"]))
+                    updated += 1
+            keep = {m["uid"] for m in merged}
+            for uid, cur in local.items():
+                if uid not in keep:
+                    c.execute("DELETE FROM tickets WHERE id=?", (cur["id"],))
+                    removed += 1
+            for uid, at in tombs.items():
+                c.execute("INSERT OR REPLACE INTO tombstones VALUES(?,?)", (uid, at))
+        return {"added": added, "updated": updated, "removed": removed}
 
     # meta / settings -------------------------------------------------
     def get_meta(self, key: str, default: str | None = None) -> str | None:

@@ -358,3 +358,6 @@ button, .chip, .algo { touch-action: manipulation; }
 @media (max-width: 760px) { .pick { font-size: .8rem; } .pickgrid { gap: .25rem; } }
 
 .pickgrid { max-width: 46rem; }
+
+.sync-row { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: .8rem; }
+.sync-row input { flex: 1 1 14rem; min-width: 0; font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--card-b); border-radius: .8rem; padding: .6rem .9rem; }
