@@ -379,7 +379,7 @@ class Api:
         """Open a GitHub page in the default browser (only github.com links)."""
         import webbrowser
 
-        if not url.startswith("https://github.com/"):
+        if not url.startswith(("https://github.com/", "https://vezrevoulis.github.io/")):
             return False
         return webbrowser.open(url)
 

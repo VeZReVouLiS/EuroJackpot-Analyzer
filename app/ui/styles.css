@@ -40,7 +40,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .nav-btn:hover { background: var(--card); color: var(--text); }
 .nav-btn.active { background: linear-gradient(135deg, var(--accent), #5b8def); color: #fff; box-shadow: 0 8px 24px rgba(124,92,255,.35); }
 .ico { font-size: 1.25rem; }
-.side-foot { margin-top: auto; padding: .8rem; border-radius: .9rem; background: var(--card); border: 1px solid var(--card-b); }
+.side-foot { margin-top: 0; padding: .8rem; border-radius: .9rem; background: var(--card); border: 1px solid var(--card-b); }
 
 #main { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
 #topbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem 1.6rem; }
@@ -321,3 +321,20 @@ button, .chip, .algo { touch-action: manipulation; }
   .detail-box td:first-child { white-space: nowrap; }
   .detail-box .tag-gr { display: block; margin: .15rem 0 0; font-size: .6rem; width: fit-content; }
 }
+
+/* About window and its button */
+.about-btn { width: 100%; margin-top: auto; padding: .6rem .8rem; display: flex; align-items: center; justify-content: center; gap: .5rem; font-size: .95rem; }
+#sidebar .about-btn + .side-foot { margin-top: .8rem; }
+.about-top { display: none; }
+.about-head { display: flex; align-items: center; gap: 1rem; margin-bottom: .6rem; padding-right: 3rem; }
+.about-head h2 { margin: 0; } .about-logo { width: 3.6rem; height: 3.6rem; }
+.about-logo img { width: 84%; }
+#about-body h3 { margin: 1.2rem 0 .4rem; }
+.about-list { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .35rem; line-height: 1.4; }
+.about-links { display: flex; flex-wrap: wrap; gap: .6rem; }
+.about-links a { padding: .55rem 1rem; border-radius: .8rem; border: 1px solid var(--card-b); background: var(--card); color: var(--text); font-weight: 700; text-decoration: none; }
+.about-links a:hover { background: var(--card-b); }
+@media (max-width: 1000px) { .about-btn span:last-child { display: none; } .about-btn { padding: .6rem 0; } }
+@media (max-width: 760px) { #sidebar .about-btn { display: none; } .about-top { display: inline-block; } .about-head { padding-right: 2.4rem; } }
+
+#about-body { width: 100%; text-align: left; }

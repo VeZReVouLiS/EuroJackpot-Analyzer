@@ -211,5 +211,16 @@
   "detail.where_hint": "The official source gives the location of the winners for the top 3 classes only.",
   "detail.region": "Region",
   "detail.country": "Country",
-  "web.install_ios": "To install it: tap Share ⬆ and then “Add to Home Screen”."
+  "web.install_ios": "To install it: tap Share ⬆ and then “Add to Home Screen”.",
+  "about.btn": "About",
+  "about.howto": "How to use",
+  "about.guide": "Statistics|The latest draw and the statistics of all draws: frequency, overdue numbers, map and pairs. Click the latest draw for winners and prizes.\nTicket|Choose 1–12 columns and an algorithm, then press “Generate ticket”. 🔒 keeps a column, 🔄 regenerates only that one. If you really play it, press “I played it”.\nMy tickets|Every ticket is checked automatically as soon as its draw is out: hits, class and prize, with totals of spending and winnings.\nDraws|The next draw with a countdown and the latest draws. Click a draw for winners, prizes and where they were won.\nSettings|Country (how draws are shown), language, theme, price per column, automatic update and export/import of a backup.\nUpdating|“Update draws” brings the new results. A new version of the app is checked in Settings.",
+  "about.sources": "Data sources",
+  "about.sources.text": "Official EuroJackpot service (eurojackpot.com): draws since 2012, winners, prizes and where they were won.\nAllwyn (api.opap.gr): Greek figures since 2024 and the jackpot.",
+  "about.credits": "Credits",
+  "about.credits.text": "Author: VeZReVouLiS, with the help of Claude (Anthropic).\nFlags: flag-icons (MIT). Charts: Chart.js (MIT).\nDesktop app: pywebview. Android app: Capacitor.",
+  "about.links": "Links",
+  "about.repo": "Project page on GitHub",
+  "about.releases": "New versions",
+  "about.disclaimer": "An unofficial tool, not connected to Allwyn or EuroJackpot. Draws are random and statistics do not improve your odds. Play responsibly (18+)."
 }

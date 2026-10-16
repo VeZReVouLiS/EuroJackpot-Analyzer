@@ -211,5 +211,16 @@
   "detail.where_hint": "Die offizielle Quelle nennt den Ort der Gewinner nur für die ersten 3 Gewinnklassen.",
   "detail.region": "Region",
   "detail.country": "Land",
-  "web.install_ios": "Zum Installieren: Tippe auf Teilen ⬆ und dann auf „Zum Home-Bildschirm“."
+  "web.install_ios": "Zum Installieren: Tippe auf Teilen ⬆ und dann auf „Zum Home-Bildschirm“.",
+  "about.btn": "Info",
+  "about.howto": "Anleitung",
+  "about.guide": "Statistik|Die letzte Ziehung und die Statistik aller Ziehungen: Häufigkeit, Überfälligkeit, Karte und Paare. Klicke auf die letzte Ziehung für Gewinner und Gewinne.\nSpielschein|Wähle 1–12 Felder und einen Algorithmus und klicke auf „Spielschein erstellen“. Mit 🔒 behältst du ein Feld, mit 🔄 erstellst du nur dieses neu. Wenn du wirklich spielst, klicke auf „Ich habe gespielt“.\nMeine Scheine|Jeder Schein wird automatisch geprüft, sobald seine Ziehung vorliegt: Treffer, Klasse und Gewinn, mit Summen für Einsatz und Gewinn.\nZiehungen|Die nächste Ziehung mit Countdown und die letzten Ziehungen. Klicke auf eine Ziehung für Gewinner, Gewinne und wo gewonnen wurde.\nEinstellungen|Land (Darstellung der Ziehungen), Sprache, Darstellung, Preis pro Feld, automatische Aktualisierung und Export/Import einer Sicherung.\nAktualisieren|„Ziehungen aktualisieren“ lädt die neuen Ergebnisse. Eine neue App-Version wird in den Einstellungen geprüft.",
+  "about.sources": "Datenquellen",
+  "about.sources.text": "Offizieller EuroJackpot-Dienst (eurojackpot.com): Ziehungen seit 2012, Gewinner, Gewinne und wo gewonnen wurde.\nAllwyn (api.opap.gr): griechische Zahlen seit 2024 und der Jackpot.",
+  "about.credits": "Credits",
+  "about.credits.text": "Autor: VeZReVouLiS, mit Unterstützung von Claude (Anthropic).\nFlaggen: flag-icons (MIT). Diagramme: Chart.js (MIT).\nDesktop-App: pywebview. Android-App: Capacitor.",
+  "about.links": "Links",
+  "about.repo": "Projektseite auf GitHub",
+  "about.releases": "Neue Versionen",
+  "about.disclaimer": "Ein inoffizielles Werkzeug ohne Verbindung zu Allwyn oder EuroJackpot. Die Ziehung ist zufällig und Statistiken erhöhen die Gewinnchancen nicht. Spiele verantwortungsvoll (ab 18)."
 }

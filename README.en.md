@@ -73,7 +73,7 @@ In the **Draws** menu you first see the **“Next draw”** box with the date an
 - The **1 + 1** class exists only in Greece.
 - For the other classes the sources only give the total of all countries and Greece.
 
-**With Germany as your country** the draw is shown like on the official eurojackpot.com: *Class* (I–XII), *Match* (e.g. “5 numbers + 2 Euro numbers”), *Winners* (e.g. “7 ×”) and *Prize per winner*, plus the total sales and fields. Below the table, **“Where the winners are”** shows in which country (and, for Germany, in which federal state) the winners were found. The official source gives this information **for the top 3 classes only**.
+**With Germany as your country** the draw is shown like on the official eurojackpot.com: *Class* (I–XII), *Match* (e.g. “5 + 2”), *Winners* (e.g. “7 ×”) and *Prize per winner*, plus the total sales and fields. Classes that were won have a green background, as in the Greek layout. Below the table, **“Where the winners are”** shows in which country (and, for Germany, in which federal state) the winners were found. The official source gives this information **for the top 3 classes only**.
 
 ![Draw with the German layout](docs/images/10-draw-details-de-en.png)
 
@@ -133,7 +133,12 @@ Typical causes of a `403 Forbidden` error: a VPN, a corporate network/proxy or a
 - **White window or nothing opens**: install the *Microsoft Edge WebView2 Runtime* from Microsoft. If that does not help, run `EuroJackpotApp.exe --browser`.
 - Requirements: Windows 10 (1803+) or 11, with Microsoft Edge.
 
-### 10. iPhone, iPad and Android
+### 10. About: guide, sources and credits
+The **ⓘ About** button (above the “Last updated” box, top right on a phone) opens a short user guide, the data sources, the credits and links to the project page and the new versions on GitHub.
+
+![About](docs/images/12-about-en.png)
+
+### 11. iPhone, iPad and Android
 The same app also works on your phone, with no account: statistics, ticket generator, ticket history with automatic prize check, next draw with countdown, country and language (Greek / English / German).
 
 ![The app on an iPhone](docs/images/phone-iphone-en.png)

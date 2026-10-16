@@ -290,8 +290,7 @@ async function runDiagnostics(box) {
 /* ---------- draw details (winners / prizes) ---------- */
 const nf = n => (n ?? 0).toLocaleString(loc());
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
-const matchText = tier => { const [m, e] = tier.split("+").map(Number);
-  return [tr(m === 1 ? "detail.m1" : "detail.mN", { m }), e ? tr(e === 1 ? "detail.e1" : "detail.eN", { e }) : ""].filter(Boolean).join(" + "); };
+const matchText = tier => tier.replace("+", " + ");           // "5 + 2", like in the Greek layout
 function whereHtml(cls) {
   const lang = S.settings.lang, byA3 = Object.fromEntries(S.cat.countries.map(c => [c.alpha3, c]));
   const blocks = cls.map((c, i) => c.where && c.where.length ? { c, i } : null).filter(Boolean).map(({ c, i }) => {
@@ -313,7 +312,7 @@ async function openDraw(dateStr) {
   const kpi = (l, v) => v != null ? `<div class="kpi"><span class="muted small">${l}</span><b>${v}</b></div>` : "";
   let table = "";
   if (det && official) {         // as on the official eurojackpot.com page: class, match, winners, prize
-    const rows = cls.filter(x => !x.greek_only).map((x, i) => `<tr><td><b>${ROMAN[i]}</b></td><td>${esc(matchText(x.tier))}</td>
+    const rows = cls.filter(x => !x.greek_only).map((x, i) => `<tr class="${x.winners > 0 ? "gr-win" : ""}"><td><b>${ROMAN[i]}</b></td><td>${esc(matchText(x.tier))}</td>
       <td class="num">${x.winners ? nf(x.winners) + " ×" : `<span class="muted">${tr("detail.no_winner")}</span>`}</td>
       <td class="num">${x.prize > 0 ? money(x.prize) : `<span class="muted">—</span>`}</td></tr>`).join("");
     table = `<table><thead><tr><th>${tr("detail.class")}</th><th>${tr("detail.match")}</th><th class="num">${tr("detail.winners")}</th><th class="num">${tr("detail.prize")}</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -665,6 +664,27 @@ async function installApp(btn) {
   }, 400);
 }
 
+/* ---------- About: guide, sources, credits, links ---------- */
+const REPO_URL = "https://github.com/VeZReVouLiS/EuroJackpot-Analyzer";
+function openAbout() {
+  const lines = k => tr(k).split("\n").filter(Boolean);
+  const guide = lines("about.guide").map(l => { const [t, d] = l.split("|"); return `<li><b>${esc(t)}:</b> ${esc(d || "")}</li>`; }).join("");
+  const li = k => lines(k).map(l => `<li>${esc(l)}</li>`).join("");
+  const link = (url, label) => `<a href="${url}" data-ext="${url}">${esc(label)}</a>`;
+  $("#about-body").innerHTML = `
+    <div class="about-head"><div class="logo about-logo"><img src="logo.svg" alt=""></div>
+      <div><h2>${tr("app.title")}</h2><div class="muted">${tr("side.version")} v${esc(S.info.version)}</div></div></div>
+    <h3>${tr("about.howto")}</h3><ul class="about-list">${guide}</ul>
+    <h3>${tr("about.sources")}</h3><ul class="about-list">${li("about.sources.text")}</ul>
+    <h3>${tr("about.credits")}</h3><ul class="about-list">${li("about.credits.text")}</ul>
+    <h3>${tr("about.links")}</h3>
+    <div class="about-links">${link(REPO_URL, "🔗 " + tr("about.repo"))}${link(REPO_URL + "/releases", "⬇ " + tr("about.releases"))}</div>
+    <div class="note">${tr("about.disclaimer")}</div>`;
+  $$("[data-ext]", $("#about-body")).forEach(a => a.onclick = e => { e.preventDefault(); call("open_url", a.dataset.ext).catch(() => window.open(a.dataset.ext, "_blank")); });
+  $("#about").classList.remove("hidden");
+}
+const closeAbout = () => $("#about").classList.add("hidden");
+
 /* ---------- iPhone: how to install the web app ---------- */
 function installTip() {
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -701,8 +721,10 @@ async function boot() {
   $("#btn-update").onclick = () => runUpdate();
   $("#ov-btn").onclick = () => runUpdate({ firstRun: true });
   $("#detail-close").onclick = closeDetail;
+  $("#btn-about").onclick = openAbout; $("#btn-about-top").onclick = openAbout; $("#about-close").onclick = closeAbout;
+  $("#about").addEventListener("click", e => { if (e.target.id === "about") closeAbout(); });
   $("#detail").addEventListener("click", e => { if (e.target.id === "detail") closeDetail(); });
-  window.addEventListener("keydown", e => { if (e.key === "F11") { e.preventDefault(); $("#btn-full").click(); } if (e.key === "Escape") closeDetail(); });
+  window.addEventListener("keydown", e => { if (e.key === "F11") { e.preventDefault(); $("#btn-full").click(); } if (e.key === "Escape") { closeDetail(); closeAbout(); } });
   window.addEventListener("resize", () => S.charts.forEach(c => c.resize()));
   if (S.settings.check_app_updates && S.info.repo_configured) {     // quiet background check, shows a badge only
     call("check_app_update").then(r => { S.appUpdate = r; updateBadge(); }).catch(() => {});
@@ -725,6 +747,7 @@ async function boot() {
     await renderAll();
     if (hp.get("gen")) { await setSetting("columns", +hp.get("gen")); await setSetting("algo", "auto_column"); await renderTicket(); await generate(); }
     if (hp.get("draw")) await openDraw(hp.get("draw"));
+    if (hp.get("about")) openAbout();
     if (hp.get("menu")) { const b = $("#" + hp.get("menu") + " .dd-btn"); if (b) b.click(); }       // docs: show an open dropdown
     if (S.settings.auto_update && !hp.toString()) runUpdate();
   }
