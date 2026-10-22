@@ -302,5 +302,6 @@
   "sync.google_privacy": "The sign-in is handled by Google. We never see your Google password or your files, and we do not keep any of your data: the tickets stay in your own Drive and the sign-in key stays on this device.",
   "sync.connected_google": "Connected to Google Drive",
   "sync.google_expired": "The Google sign-in has expired. Sign in again to keep syncing.",
-  "sync.google_again": "Sign in again"
+  "sync.google_again": "Sign in again",
+  "sync.google_close": "You can close this window and go back to the app."
 }

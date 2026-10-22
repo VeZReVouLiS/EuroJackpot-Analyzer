@@ -302,5 +302,6 @@
   "sync.google_privacy": "Het inloggen wordt afgehandeld door Google. We zien nooit je Google-wachtwoord of je bestanden en we bewaren geen van je gegevens: de tickets blijven in je eigen Drive en de inlogsleutel blijft op dit apparaat.",
   "sync.connected_google": "Verbonden met Google Drive",
   "sync.google_expired": "De Google-aanmelding is verlopen. Log opnieuw in om te blijven synchroniseren.",
-  "sync.google_again": "Opnieuw inloggen"
+  "sync.google_again": "Opnieuw inloggen",
+  "sync.google_close": "Je kunt dit venster sluiten en terugkeren naar de app."
 }

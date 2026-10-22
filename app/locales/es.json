@@ -302,5 +302,6 @@
   "sync.google_privacy": "Google gestiona el inicio de sesión. Nunca vemos tu contraseña de Google ni tus archivos, y no guardamos ninguno de tus datos: los boletos permanecen en tu propio Drive y la clave de inicio de sesión permanece en este dispositivo.",
   "sync.connected_google": "Conectado a Google Drive",
   "sync.google_expired": "El inicio de sesión de Google ha caducado. Inicia sesión de nuevo para seguir sincronizando.",
-  "sync.google_again": "Iniciar sesión de nuevo"
+  "sync.google_again": "Iniciar sesión de nuevo",
+  "sync.google_close": "Puedes cerrar esta ventana y volver a la aplicación."
 }

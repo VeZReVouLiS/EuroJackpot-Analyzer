@@ -302,5 +302,6 @@
   "sync.google_privacy": "Innloggingen håndteres av Google. Vi ser aldri Google-passordet eller filene dine, og vi lagrer ingen av dataene dine: kupongene blir i din egen Drive, og innloggingsnøkkelen blir på denne enheten.",
   "sync.connected_google": "Koblet til Google Drive",
   "sync.google_expired": "Google-innloggingen har utløpt. Logg på igjen for å fortsette synkroniseringen.",
-  "sync.google_again": "Logg på igjen"
+  "sync.google_again": "Logg på igjen",
+  "sync.google_close": "Du kan lukke dette vinduet og gå tilbake til appen."
 }

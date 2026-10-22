@@ -302,5 +302,6 @@
   "sync.google_privacy": "Google sér um innskráninguna. Við sjáum aldrei Google-lykilorðið þitt eða skrárnar þínar og við geymum engin gögn frá þér: miðarnir haldast í þínu eigin Drive og innskráningarlykillinn helst í þessu tæki.",
   "sync.connected_google": "Tengt við Google Drive",
   "sync.google_expired": "Google-innskráningin er útrunnin. Skráðu þig inn aftur til að halda áfram að samstilla.",
-  "sync.google_again": "Skrá inn aftur"
+  "sync.google_again": "Skrá inn aftur",
+  "sync.google_close": "Þú getur lokað þessum glugga og farið aftur í forritið."
 }

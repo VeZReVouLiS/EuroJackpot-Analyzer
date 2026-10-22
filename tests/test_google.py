@@ -263,3 +263,19 @@ def test_github_connection_is_found_again_after_an_unfinished_google_sign_in(tmp
     api.set_setting("sync_provider", "google")          # the state an older version could leave behind
     st = api.sync_status()
     assert st["provider"] == "github" and st["connected"] is True
+
+
+def test_the_page_left_in_the_browser_speaks_the_app_language(monkeypatch):
+    monkeypatch.setattr(google_drive, "exchange_code", lambda *a: dict(TOK))
+    flow = google_drive.LoopbackFlow({"title": "Συνδεδεμένο με το Google Drive", "text": "Μπορείς να κλείσεις αυτό το παράθυρο"})
+    page = {}
+
+    def browser():
+        time.sleep(0.2)
+        page["html"] = urllib.request.urlopen(f"{flow.redirect_uri}/?code=abc&state={flow.state}", timeout=5).read().decode("utf-8")
+
+    t = threading.Thread(target=browser)
+    t.start()
+    flow.wait(10)
+    t.join()
+    assert "Συνδεδεμένο με το Google Drive" in page["html"] and "Μπορείς να κλείσεις" in page["html"] and "window.close()" in page["html"]

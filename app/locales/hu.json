@@ -302,5 +302,6 @@
   "sync.google_privacy": "A bejelentkezést a Google kezeli. Soha nem látjuk a Google-jelszavadat vagy a fájljaidat, és nem tárolunk semmilyen adatodat: a szelvények a saját Drive-odon maradnak, a bejelentkezési kulcs pedig ezen az eszközön marad.",
   "sync.connected_google": "Csatlakoztatva a Google Drive-hoz",
   "sync.google_expired": "A Google-bejelentkezés lejárt. Jelentkezz be újra, hogy a szinkronizálás folytatódjon.",
-  "sync.google_again": "Jelentkezz be újra"
+  "sync.google_again": "Jelentkezz be újra",
+  "sync.google_close": "Bezárhatod ezt az ablakot, és visszatérhetsz az alkalmazáshoz."
 }

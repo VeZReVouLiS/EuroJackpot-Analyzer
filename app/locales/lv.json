@@ -302,5 +302,6 @@
   "sync.google_privacy": "Pierakstīšanos apstrādā Google. Mēs nekad neredzam tavu Google paroli vai failus, un mēs neglabājam nekādus tavus datus: biļetes paliek tavā paša Drive, un pierakstīšanās atslēga paliek šajā ierīcē.",
   "sync.connected_google": "Savienots ar Google Drive",
   "sync.google_expired": "Google pierakstīšanās ir beigusies. Pieraksties vēlreiz, lai turpinātu sinhronizēt.",
-  "sync.google_again": "Pierakstīties vēlreiz"
+  "sync.google_again": "Pierakstīties vēlreiz",
+  "sync.google_close": "Vari aizvērt šo logu un atgriezties lietotnē."
 }

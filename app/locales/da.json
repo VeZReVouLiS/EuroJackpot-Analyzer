@@ -302,5 +302,6 @@
   "sync.google_privacy": "Login håndteres af Google. Vi ser aldrig din Google-adgangskode eller dine filer, og vi gemmer ingen af dine data: kuponerne bliver i dit eget Drive, og loginnøglen bliver på denne enhed.",
   "sync.connected_google": "Forbundet til Google Drive",
   "sync.google_expired": "Google-login er udløbet. Log ind igen for at fortsætte synkroniseringen.",
-  "sync.google_again": "Log ind igen"
+  "sync.google_again": "Log ind igen",
+  "sync.google_close": "Du kan lukke dette vindue og gå tilbage til appen."
 }

@@ -302,5 +302,6 @@
   "sync.google_privacy": "Logowaniem zajmuje się Google. Nigdy nie widzimy Twojego hasła do Google ani Twoich plików i nie przechowujemy żadnych Twoich danych: kupony zostają w Twoim własnym Drive, a klucz logowania zostaje na tym urządzeniu.",
   "sync.connected_google": "Połączono z Google Drive",
   "sync.google_expired": "Logowanie do Google wygasło. Zaloguj się ponownie, aby kontynuować synchronizację.",
-  "sync.google_again": "Zaloguj się ponownie"
+  "sync.google_again": "Zaloguj się ponownie",
+  "sync.google_close": "Możesz zamknąć to okno i wrócić do aplikacji."
 }

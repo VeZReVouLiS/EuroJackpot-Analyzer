@@ -302,5 +302,6 @@
   "sync.google_privacy": "Přihlášení zajišťuje Google. Nikdy nevidíme tvé heslo ke Google ani tvé soubory a neukládáme žádná tvá data: kupony zůstávají ve tvém vlastním Drive a přihlašovací klíč zůstává v tomto zařízení.",
   "sync.connected_google": "Připojeno ke Google Drive",
   "sync.google_expired": "Přihlášení ke Google vypršelo. Přihlas se znovu, aby synchronizace pokračovala.",
-  "sync.google_again": "Přihlásit se znovu"
+  "sync.google_again": "Přihlásit se znovu",
+  "sync.google_close": "Toto okno můžeš zavřít a vrátit se do aplikace."
 }

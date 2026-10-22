@@ -302,5 +302,6 @@
   "sync.google_privacy": "Inloggningen sköts av Google. Vi ser aldrig ditt Google-lösenord eller dina filer, och vi sparar ingen av dina data: biljetterna ligger kvar i din egen Drive och inloggningsnyckeln stannar på den här enheten.",
   "sync.connected_google": "Ansluten till Google Drive",
   "sync.google_expired": "Google-inloggningen har gått ut. Logga in igen för att fortsätta synkronisera.",
-  "sync.google_again": "Logga in igen"
+  "sync.google_again": "Logga in igen",
+  "sync.google_close": "Du kan stänga det här fönstret och gå tillbaka till appen."
 }

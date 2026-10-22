@@ -302,5 +302,6 @@
   "sync.google_privacy": "Kirjautumisen hoitaa Google. Emme koskaan näe Google-salasanaasi tai tiedostojasi emmekä säilytä mitään tietojasi: liput pysyvät omassa Drivessäsi ja kirjautumisavain pysyy tällä laitteella.",
   "sync.connected_google": "Yhdistetty Google Driveen",
   "sync.google_expired": "Googlen kirjautuminen on vanhentunut. Kirjaudu sisään uudelleen, jotta synkronointi jatkuu.",
-  "sync.google_again": "Kirjaudu sisään uudelleen"
+  "sync.google_again": "Kirjaudu sisään uudelleen",
+  "sync.google_close": "Voit sulkea tämän ikkunan ja palata sovellukseen."
 }

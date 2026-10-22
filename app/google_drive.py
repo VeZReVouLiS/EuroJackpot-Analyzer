@@ -29,9 +29,10 @@ SCOPE = "https://www.googleapis.com/auth/drive.appdata"
 API = "https://www.googleapis.com/drive/v3"
 UPLOAD = "https://www.googleapis.com/upload/drive/v3"
 
-DONE_PAGE = ("<!doctype html><meta charset='utf-8'><title>EuroJackpot Analyzer</title>"
-             "<body style='font:18px system-ui;text-align:center;margin-top:20vh;color:#222'>"
-             "<h2>{title}</h2><p>{text}</p></body>")
+DONE_PAGE = ("<!doctype html><meta charset='utf-8'><title>EuroJackpot Analyzer</title><meta name='viewport' content='width=device-width, initial-scale=1'>"
+             "<body style='font:18px system-ui,Segoe UI,sans-serif;text-align:center;margin:0;padding:22vh 1rem 0;background:#0f1424;color:#e8ecff'>"
+             "<div style='font-size:56px;color:{color}'>{icon}</div><h2 style='margin:.4em 0'>{title}</h2><p style='opacity:.8'>{text}</p>"
+             "<p style='opacity:.5;font-size:15px'>EuroJackpot Analyzer</p>{script}</body>")
 
 
 def pkce_pair() -> tuple[str, str]:
@@ -92,7 +93,7 @@ class LoopbackFlow:
         self.result: dict = {}
         self.event = threading.Event()
         flow = self
-        t = texts or {"title": "Done", "text": "You can close this tab and go back to EuroJackpot Analyzer."}
+        t = {"title": "Connected to Google Drive", "text": "You can close this window and go back to the app.", "error": "Sync failed: {err}", **(texts or {})}
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *a):
@@ -106,7 +107,10 @@ class LoopbackFlow:
                     return
                 ok = q.get("state", [""])[0] == flow.state and "code" in q
                 flow.result = {"code": q["code"][0]} if ok else {"error": q.get("error", ["state mismatch"])[0]}
-                body = DONE_PAGE.format(title=t["title"] if ok else "Error", text=t["text"] if ok else flow.result["error"]).encode("utf-8")
+                body = DONE_PAGE.format(
+                    icon="&#10004;" if ok else "&#9888;", color="#34d399" if ok else "#f59e0b",
+                    title=t["title"] if ok else t["error"].format(err=flow.result["error"]), text=t["text"] if ok else "",
+                    script="<script>setTimeout(function(){window.close()},2500)</script>" if ok else "").encode("utf-8")
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
                 self.send_header("Content-Length", str(len(body)))

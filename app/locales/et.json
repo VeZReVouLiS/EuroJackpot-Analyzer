@@ -302,5 +302,6 @@
   "sync.google_privacy": "Sisselogimist haldab Google. Me ei näe kunagi sinu Google'i parooli ega faile ning me ei säilita ühtegi sinu andmetest: piletid jäävad sinu enda Drive'i ja sisselogimisvõti jääb sellesse seadmesse.",
   "sync.connected_google": "Ühendatud Google Drive'iga",
   "sync.google_expired": "Google'i sisselogimine on aegunud. Logi uuesti sisse, et sünkroonimine jätkuks.",
-  "sync.google_again": "Logi uuesti sisse"
+  "sync.google_again": "Logi uuesti sisse",
+  "sync.google_close": "Võid selle akna sulgeda ja rakendusse tagasi minna."
 }

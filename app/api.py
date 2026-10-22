@@ -114,7 +114,8 @@ class Api:
         """Sign in with Google: opens the system browser; poll google_connect_status() until it says done."""
         if not google_client.available():
             raise ValueError("Google sign-in is not available in this build")
-        flow = google_drive.LoopbackFlow({"title": "OK", "text": "EuroJackpot Analyzer"})
+        t = self.get_locale(self.get_settings().get("lang") or "en")       # the page that Google leaves in the browser speaks the language of the app
+        flow = google_drive.LoopbackFlow({"title": t["sync.connected_google"], "text": t["sync.google_close"], "error": t["sync.error"]})
         self._google = {"state": "waiting", "error": None, "url": flow.url}
         before = {k: self.get_settings().get(k) for k in ("sync_provider", "google_tokens", "sync_file")}
 

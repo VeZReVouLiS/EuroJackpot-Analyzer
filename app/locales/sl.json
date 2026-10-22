@@ -302,5 +302,6 @@
   "sync.google_privacy": "Prijavo obravnava Google. Nikoli ne vidimo tvojega gesla za Google ali tvojih datotek in ne hranimo nobenih tvojih podatkov: listki ostanejo v tvojem Drive, ključ za prijavo pa ostane v tej napravi.",
   "sync.connected_google": "Povezano z Google Drive",
   "sync.google_expired": "Prijava v Google je potekla. Prijavi se znova, da se sinhronizacija nadaljuje.",
-  "sync.google_again": "Prijavi se znova"
+  "sync.google_again": "Prijavi se znova",
+  "sync.google_close": "To okno lahko zapreš in se vrneš v aplikacijo."
 }

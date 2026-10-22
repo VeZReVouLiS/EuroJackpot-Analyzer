@@ -302,5 +302,6 @@
   "sync.google_privacy": "Prijavu obrađuje Google. Nikada ne vidimo tvoju Google lozinku ni tvoje datoteke i ne čuvamo nikakve tvoje podatke: listići ostaju u tvom vlastitom Driveu, a ključ za prijavu ostaje na ovom uređaju.",
   "sync.connected_google": "Povezano s Google Driveom",
   "sync.google_expired": "Google prijava je istekla. Prijavi se ponovno kako bi se sinkronizacija nastavila.",
-  "sync.google_again": "Prijavi se ponovno"
+  "sync.google_again": "Prijavi se ponovno",
+  "sync.google_close": "Možeš zatvoriti ovaj prozor i vratiti se u aplikaciju."
 }

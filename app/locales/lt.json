@@ -302,5 +302,6 @@
   "sync.google_privacy": "Prisijungimą tvarko Google. Mes niekada nematome tavo Google slaptažodžio ar failų ir nesaugome jokių tavo duomenų: bilietai lieka tavo paties Drive, o prisijungimo raktas lieka šiame įrenginyje.",
   "sync.connected_google": "Prisijungta prie Google Drive",
   "sync.google_expired": "Prisijungimas prie Google nebegalioja. Prisijunk iš naujo, kad sinchronizavimas tęstųsi.",
-  "sync.google_again": "Prisijungti iš naujo"
+  "sync.google_again": "Prisijungti iš naujo",
+  "sync.google_close": "Galite uždaryti šį langą ir grįžti į programėlę."
 }

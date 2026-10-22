@@ -302,5 +302,6 @@
   "sync.google_privacy": "L'accesso è gestito da Google. Non vediamo mai la tua password Google né i tuoi file e non conserviamo nessuno dei tuoi dati: i biglietti restano nel tuo Drive e la chiave di accesso resta su questo dispositivo.",
   "sync.connected_google": "Connesso a Google Drive",
   "sync.google_expired": "L'accesso a Google è scaduto. Accedi di nuovo per continuare a sincronizzare.",
-  "sync.google_again": "Accedi di nuovo"
+  "sync.google_again": "Accedi di nuovo",
+  "sync.google_close": "Puoi chiudere questa finestra e tornare all'app."
 }

@@ -302,5 +302,6 @@
   "sync.google_privacy": "Die Anmeldung läuft über Google. Wir sehen nie dein Google-Passwort oder deine Dateien und speichern keine deiner Daten: Die Scheine bleiben in deinem eigenen Drive und der Anmeldeschlüssel bleibt auf diesem Gerät.",
   "sync.connected_google": "Mit Google Drive verbunden",
   "sync.google_expired": "Die Google-Anmeldung ist abgelaufen. Melde dich erneut an, damit die Synchronisierung weiterläuft.",
-  "sync.google_again": "Erneut anmelden"
+  "sync.google_again": "Erneut anmelden",
+  "sync.google_close": "Du kannst dieses Fenster schließen und zur App zurückkehren."
 }
