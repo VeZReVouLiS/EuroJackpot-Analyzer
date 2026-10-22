@@ -90,6 +90,8 @@ def build(out: Path, data: Path, version: str) -> Path:
         f'export const VERSION = "{version}";\nexport const REPO = "VeZReVouLiS/EuroJackpot-Analyzer";\n'
         'export const PAGES = "https://vezrevoulis.github.io/EuroJackpot-Analyzer/";\n', encoding="utf-8")
     shutil.copytree(WEB / "icons", out / "icons")
+    for p in (WEB / "legal").glob("*.html"):          # privacy policy and terms (linked from the Google consent screen)
+        shutil.copy2(p, out / p.name)
     # data
     (out / "data").mkdir()
     shutil.copy2(data, out / "data" / "draws.json")
