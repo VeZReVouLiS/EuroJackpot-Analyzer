@@ -97,6 +97,9 @@ class Api:
     # ticket sync between devices (private gist of the user) -------------
     def _sync_connected(self, s: dict | None = None) -> bool:
         s = s or self.get_settings()
+        if s.get("sync_provider") == "google" and not (s.get("google_tokens") or {}).get("refresh_token") and s.get("sync_token"):
+            self.set_setting("sync_provider", "github")        # a Google sign-in that did not finish must not hide the GitHub connection
+            s = self.get_settings()
         if s.get("sync_provider") == "google":
             return bool((s.get("google_tokens") or {}).get("refresh_token"))
         return bool(s.get("sync_token"))
@@ -112,6 +115,7 @@ class Api:
             raise ValueError("Google sign-in is not available in this build")
         flow = google_drive.LoopbackFlow({"title": "OK", "text": "EuroJackpot Analyzer"})
         self._google = {"state": "waiting", "error": None, "url": flow.url}
+        before = {k: self.get_settings().get(k) for k in ("sync_provider", "google_tokens", "sync_file")}
 
         def run():
             try:
@@ -121,8 +125,9 @@ class Api:
                 self.set_setting("sync_file", "")
                 res = self.sync_now()
                 self._google = {"state": "done", "error": None, "url": None, "result": res}
-            except Exception as e:          # shown in the settings page
-                self.set_setting("google_tokens", {})
+            except Exception as e:          # shown in the settings page; whatever was connected before (e.g. GitHub) stays as it was
+                for k, v in before.items():
+                    self.set_setting(k, v)
                 self._google = {"state": "error", "error": str(e), "url": None}
 
         threading.Thread(target=run, daemon=True).start()
@@ -149,10 +154,13 @@ class Api:
             raise
 
     def sync_disconnect(self) -> dict:
-        self.set_setting("sync_token", "")
-        self.set_setting("sync_gist", "")
-        self.set_setting("google_tokens", {})
-        self.set_setting("sync_file", "")
+        """Disconnect the provider that is in use; the credentials of the other one (if any) are kept."""
+        if self.get_settings().get("sync_provider") == "google":
+            self.set_setting("google_tokens", {})
+            self.set_setting("sync_file", "")
+        else:
+            self.set_setting("sync_token", "")
+            self.set_setting("sync_gist", "")
         self._google = {"state": "idle", "error": None, "url": None}
         return self.sync_status()
 

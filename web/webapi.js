@@ -328,6 +328,9 @@ export async function createApi() {
 
     /* ticket sync between devices: a private gist of the user (GitHub) or the hidden app data folder of the user's Google Drive */
     async sync_status() {
+      if (settings().sync_provider === "google" && !(settings().google_tokens && settings().google_tokens.access_token) && settings().sync_token) {
+        await api.set_setting("sync_provider", "github");        // a Google sign-in that did not finish must not hide the GitHub connection
+      }
       const s = settings(), google = s.sync_provider === "google", tok = s.google_tokens && s.google_tokens.access_token;
       return { connected: google ? !!tok : !!s.sync_token, provider: google ? "google" : "github",
         needs_signin: google && !!tok && Date.now() >= (s.google_tokens.expires_at || 0),
@@ -339,9 +342,9 @@ export async function createApi() {
       await api.set_setting("sync_provider", "github"); await api.set_setting("sync_token", token); await api.set_setting("sync_gist", "");
       try { return await api.sync_now(); } catch (e) { await api.set_setting("sync_token", ""); throw e; }
     },
-    async sync_disconnect() {
-      for (const k of ["sync_token", "sync_gist", "sync_file"]) await api.set_setting(k, "");
-      await api.set_setting("google_tokens", {});
+    async sync_disconnect() {       // the provider in use; the credentials of the other one (if any) are kept
+      if (settings().sync_provider === "google") { await api.set_setting("google_tokens", {}); await api.set_setting("sync_file", ""); }
+      else { await api.set_setting("sync_token", ""); await api.set_setting("sync_gist", ""); }
       return api.sync_status();
     },
     /* Google sign-in in the browser (Google Identity Services, token model): the script is loaded early so that the pop-up opens
@@ -350,6 +353,8 @@ export async function createApi() {
     async google_connect_start() {
       if (!googleAvailable()) throw new Error("Google sign-in is not available here");
       await loadGis();
+      const before = Object.fromEntries(["sync_provider", "google_tokens", "sync_file"].map((k) => [k, settings()[k]]));
+      const restore = async () => { for (const [k, v] of Object.entries(before)) await api.set_setting(k, v); };      // a failed sign-in must not switch away from GitHub
       return new Promise((resolve, reject) => {
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: GOOGLE_WEB_CLIENT_ID, scope: DRIVE_SCOPE,
@@ -358,7 +363,7 @@ export async function createApi() {
             await api.set_setting("sync_provider", "google");
             await api.set_setting("google_tokens", { access_token: resp.access_token, expires_at: Date.now() + (Number(resp.expires_in) || 3600) * 1000 - 60000 });
             await api.set_setting("sync_file", "");
-            try { resolve(await api.sync_now()); } catch (e) { reject(e); }
+            try { resolve(await api.sync_now()); } catch (e) { await restore(); reject(e); }
           },
           error_callback: (e) => reject(new Error(e && e.type === "popup_closed" ? "The Google sign-in was cancelled." : `Google sign-in failed (${(e && e.type) || "error"}).`)),
         });

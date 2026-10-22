@@ -185,3 +185,81 @@ def test_google_connect_needs_the_secret(tmp_path, monkeypatch):
     assert api.sync_status()["google_available"] is False
     with pytest.raises(ValueError):
         api.google_connect_start()
+
+
+def test_a_failed_google_sign_in_keeps_github(tmp_path, monkeypatch):
+    class FailingFlow:
+        url = "https://accounts.example/auth"
+
+        def __init__(self, texts=None):
+            pass
+
+        def wait(self, timeout=0):
+            raise ticket_sync.SyncError("cancelled")
+
+    monkeypatch.setattr(google_client, "client_secret", lambda: "s")
+    monkeypatch.setattr(google_drive, "LoopbackFlow", FailingFlow)
+    monkeypatch.setattr("app.api.webbrowser.open", lambda url: True)
+    api = Api(Database(tmp_path / "t.db"))
+    api.set_setting("sync_token", "ghp_x")
+    api.set_setting("sync_gist", "G1")
+    assert api.sync_status()["connected"] is True
+    api.google_connect_start()
+    for _ in range(100):
+        if api.google_connect_status()["state"] != "waiting":
+            break
+        time.sleep(0.05)
+    assert api.google_connect_status()["state"] == "error"
+    st = api.sync_status()
+    assert st["provider"] == "github" and st["connected"] is True and api.get_settings()["sync_token"] == "ghp_x"
+
+
+def test_a_failed_sync_after_google_sign_in_keeps_github(tmp_path, monkeypatch):
+    class OkFlow:
+        url = "https://accounts.example/auth"
+
+        def __init__(self, texts=None):
+            pass
+
+        def wait(self, timeout=0):
+            return dict(TOK)
+
+    class BrokenDrive(FakeDrive):
+        def pull_or_create(self):
+            raise ticket_sync.SyncError("Drive API is not enabled")
+
+    monkeypatch.setattr(google_client, "client_secret", lambda: "s")
+    monkeypatch.setattr(google_drive, "LoopbackFlow", OkFlow)
+    monkeypatch.setattr(google_drive, "Drive", BrokenDrive)
+    monkeypatch.setattr("app.api.webbrowser.open", lambda url: True)
+    api = Api(Database(tmp_path / "t.db"))
+    api.set_setting("sync_token", "ghp_x")
+    api.google_connect_start()
+    for _ in range(100):
+        if api.google_connect_status()["state"] != "waiting":
+            break
+        time.sleep(0.05)
+    assert api.google_connect_status()["state"] == "error" and "not enabled" in api.google_connect_status()["error"]
+    s = api.get_settings()
+    assert s["sync_provider"] == "github" and s["sync_token"] == "ghp_x" and s["google_tokens"] == {}
+
+
+def test_disconnect_only_the_provider_in_use(tmp_path):
+    api = Api(Database(tmp_path / "t.db"))
+    api.set_setting("sync_token", "ghp_x")
+    api.set_setting("google_tokens", dict(TOK))
+    api.set_setting("sync_provider", "google")
+    api.sync_disconnect()
+    s = api.get_settings()
+    assert s["google_tokens"] == {} and s["sync_token"] == "ghp_x"          # the GitHub token is still there
+    api.set_setting("sync_provider", "github")
+    api.sync_disconnect()
+    assert api.get_settings()["sync_token"] == ""
+
+
+def test_github_connection_is_found_again_after_an_unfinished_google_sign_in(tmp_path):
+    api = Api(Database(tmp_path / "t.db"))
+    api.set_setting("sync_token", "ghp_x")
+    api.set_setting("sync_provider", "google")          # the state an older version could leave behind
+    st = api.sync_status()
+    assert st["provider"] == "github" and st["connected"] is True
