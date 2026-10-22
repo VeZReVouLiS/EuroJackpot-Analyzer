@@ -5,10 +5,12 @@ import json
 import threading
 import time
 import traceback
+import webbrowser
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from . import analysis, appupdate, countries, evaluation, exporter, generators, rules, stats, ticket_sync, updater, version
+from . import (analysis, appupdate, countries, evaluation, exporter, generators, google_client, google_drive, rules, stats, ticket_sync,
+               updater, version)
 from .db import Database
 from .paths import resource_dir
 from .sources import allwyn, importer, official
@@ -20,6 +22,9 @@ DEFAULT_SETTINGS = {
     "prices": {},                 # price per column the user set, by country code
     "sync_token": "",             # GitHub token (gist) for ticket sync between devices; "" = not connected
     "sync_gist": "",              # id of the private gist that holds the synced tickets
+    "sync_provider": "github",    # github | google
+    "google_tokens": {},          # Google Drive sign-in (refresh token stays on this device)
+    "sync_file": "",              # id of the sync file in the app data folder of Google Drive
     "theme": "dark",
     "auto_update": True,          # download new draws when the app starts
     "check_app_updates": True,    # look for a new app version (GitHub) when the app starts
@@ -90,14 +95,51 @@ class Api:
         return json.loads(path.read_text(encoding="utf-8"))
 
     # ticket sync between devices (private gist of the user) -------------
+    def _sync_connected(self, s: dict | None = None) -> bool:
+        s = s or self.get_settings()
+        if s.get("sync_provider") == "google":
+            return bool((s.get("google_tokens") or {}).get("refresh_token"))
+        return bool(s.get("sync_token"))
+
     def sync_status(self) -> dict:
         s = self.get_settings()
-        return {"connected": bool(s.get("sync_token")), "gist": s.get("sync_gist") or None, "last": self._db.get_meta("sync_last")}
+        return {"connected": self._sync_connected(s), "provider": s.get("sync_provider") or "github", "gist": s.get("sync_gist") or None,
+                "google_available": google_client.available(), "last": self._db.get_meta("sync_last")}
+
+    def google_connect_start(self) -> dict:
+        """Sign in with Google: opens the system browser; poll google_connect_status() until it says done."""
+        if not google_client.available():
+            raise ValueError("Google sign-in is not available in this build")
+        flow = google_drive.LoopbackFlow({"title": "OK", "text": "EuroJackpot Analyzer"})
+        self._google = {"state": "waiting", "error": None, "url": flow.url}
+
+        def run():
+            try:
+                tokens = flow.wait(300)
+                self.set_setting("sync_provider", "google")
+                self.set_setting("google_tokens", tokens)
+                self.set_setting("sync_file", "")
+                res = self.sync_now()
+                self._google = {"state": "done", "error": None, "url": None, "result": res}
+            except Exception as e:          # shown in the settings page
+                self.set_setting("google_tokens", {})
+                self._google = {"state": "error", "error": str(e), "url": None}
+
+        threading.Thread(target=run, daemon=True).start()
+        try:
+            webbrowser.open(flow.url)
+        except Exception:
+            pass
+        return dict(self._google)
+
+    def google_connect_status(self) -> dict:
+        return dict(getattr(self, "_google", None) or {"state": "idle", "error": None, "url": None})
 
     def sync_connect(self, token: str) -> dict:
         token = (token or "").strip()
         if not token:
             raise ValueError("token is empty")
+        self.set_setting("sync_provider", "github")
         self.set_setting("sync_token", token)
         self.set_setting("sync_gist", "")
         try:
@@ -109,14 +151,23 @@ class Api:
     def sync_disconnect(self) -> dict:
         self.set_setting("sync_token", "")
         self.set_setting("sync_gist", "")
+        self.set_setting("google_tokens", {})
+        self.set_setting("sync_file", "")
+        self._google = {"state": "idle", "error": None, "url": None}
         return self.sync_status()
+
+    def _sync_provider(self, s: dict):
+        """The place the tickets are synced with: the Google Drive app data folder or a private GitHub gist."""
+        if s.get("sync_provider") == "google":
+            return google_drive.Drive(s["google_tokens"], s.get("sync_file") or None, on_tokens=lambda t: self.set_setting("google_tokens", t))
+        return ticket_sync.Gist(s["sync_token"], s.get("sync_gist") or None)
 
     def sync_now(self) -> dict:
         """Merge the local tickets with the gist (last change wins per ticket) and upload the result."""
         s = self.get_settings()
-        if not s.get("sync_token"):
+        if not self._sync_connected(s):
             raise ValueError("not connected")
-        gist = ticket_sync.Gist(s["sync_token"], s.get("sync_gist") or None)
+        gist = self._sync_provider(s)
         remote = gist.pull_or_create()
         local = [ticket_sync.sync_view(t) for t in self._db.all_tickets()]
         merged, tombs = ticket_sync.merge(local, remote, self._db.tombstones())
@@ -125,7 +176,7 @@ class Api:
         pushed = remote is None or {k: remote.get(k) for k in ("tickets", "tombstones")} != {"tickets": doc["tickets"], "tombstones": doc["tombstones"]}
         if pushed:
             gist.push(doc)
-        self.set_setting("sync_gist", gist.id)
+        self.set_setting("sync_file" if s.get("sync_provider") == "google" else "sync_gist", gist.id)
         self._db.set_meta("sync_last", datetime.now().isoformat(timespec="seconds"))
         self.evaluate_tickets()
         return {**changed, "pushed": pushed, "tickets": len(merged), **self.sync_status()}
@@ -149,7 +200,7 @@ class Api:
             "version": version.__version__,
             "repo_configured": bool(version.GITHUB_REPO),
             "unseen_wins": self.get_tickets()["unseen_wins"],
-            "sync": bool(self.get_settings().get("sync_token")),
+            "sync": self._sync_connected(),
         }
 
     # draw-data updating -----------------------------------------------

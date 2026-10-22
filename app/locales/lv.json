@@ -294,5 +294,13 @@
   "sync.error": "Sinhronizācija neizdevās: {err}",
   "app.android_permission": "Atļauj lietotnei instalēt atjauninājumus (lapā, kas atvērās) un vēlreiz nospied „Instalēt un restartēt“.",
   "app.android_installing": "Lejupielāde pabeigta. Apstiprini instalēšanu Android logā.",
-  "sync.no_data": "Mēs neglabājam nekādus tavus datus: biļetes tiek glabātas tikai tavā GitHub kontā, un pieteikšanos pilnībā apstrādā GitHub."
+  "sync.no_data": "Mēs neglabājam nekādus tavus datus: biļetes tiek glabātas tikai tavā GitHub kontā, un pieteikšanos pilnībā apstrādā GitHub.",
+  "sync.provider": "Glabāt biļetes pakalpojumā",
+  "sync.google_intro": "Pieraksties ar savu Google kontu. Biļetes tiek saglabātas šīs lietotnes slēptā mapē tavā paša Google Drive, un lietotne redz tikai šo vienu failu, nekad tavus citus failus.",
+  "sync.google_btn": "Pierakstīties ar Google",
+  "sync.google_wait": "Gaida pierakstīšanos tavā pārlūkprogrammā…",
+  "sync.google_privacy": "Pierakstīšanos apstrādā Google. Mēs nekad neredzam tavu Google paroli vai failus, un mēs neglabājam nekādus tavus datus: biļetes paliek tavā paša Drive, un pierakstīšanās atslēga paliek šajā ierīcē.",
+  "sync.connected_google": "Savienots ar Google Drive",
+  "sync.google_expired": "Google pierakstīšanās ir beigusies. Pieraksties vēlreiz, lai turpinātu sinhronizēt.",
+  "sync.google_again": "Pierakstīties vēlreiz"
 }

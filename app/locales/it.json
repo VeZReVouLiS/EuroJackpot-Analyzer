@@ -294,5 +294,13 @@
   "sync.error": "Sincronizzazione non riuscita: {err}",
   "app.android_permission": "Consenti all'app di installare gli aggiornamenti (nella pagina che si è aperta) e premi di nuovo “Installa e riavvia”.",
   "app.android_installing": "Il download è completato. Conferma l'installazione nella finestra di Android.",
-  "sync.no_data": "Non conserviamo alcun tuo dato: le schedine sono salvate solo nel tuo account GitHub e l'accesso è gestito interamente da GitHub."
+  "sync.no_data": "Non conserviamo alcun tuo dato: le schedine sono salvate solo nel tuo account GitHub e l'accesso è gestito interamente da GitHub.",
+  "sync.provider": "Conserva i biglietti in",
+  "sync.google_intro": "Accedi con il tuo account Google. I biglietti vengono salvati in una cartella nascosta di questa app nel tuo Google Drive, e l'app può vedere solo quel file, mai gli altri tuoi file.",
+  "sync.google_btn": "Accedi con Google",
+  "sync.google_wait": "In attesa dell'accesso nel tuo browser…",
+  "sync.google_privacy": "L'accesso è gestito da Google. Non vediamo mai la tua password Google né i tuoi file e non conserviamo nessuno dei tuoi dati: i biglietti restano nel tuo Drive e la chiave di accesso resta su questo dispositivo.",
+  "sync.connected_google": "Connesso a Google Drive",
+  "sync.google_expired": "L'accesso a Google è scaduto. Accedi di nuovo per continuare a sincronizzare.",
+  "sync.google_again": "Accedi di nuovo"
 }

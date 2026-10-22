@@ -294,5 +294,13 @@
   "sync.error": "Error de sincronización: {err}",
   "app.android_permission": "Permite que la app instale actualizaciones (en la página que se ha abierto) y pulsa de nuevo «Instalar y reiniciar».",
   "app.android_installing": "La descarga ha terminado. Confirma la instalación en la ventana de Android.",
-  "sync.no_data": "No guardamos ninguno de tus datos: los boletos se almacenan solo en tu propia cuenta de GitHub y el inicio de sesión lo gestiona por completo GitHub."
+  "sync.no_data": "No guardamos ninguno de tus datos: los boletos se almacenan solo en tu propia cuenta de GitHub y el inicio de sesión lo gestiona por completo GitHub.",
+  "sync.provider": "Guardar los boletos en",
+  "sync.google_intro": "Inicia sesión con tu propia cuenta de Google. Los boletos se guardan en una carpeta oculta de esta app en tu propio Google Drive, y la app solo puede ver ese archivo, nunca tus otros archivos.",
+  "sync.google_btn": "Iniciar sesión con Google",
+  "sync.google_wait": "Esperando el inicio de sesión en tu navegador…",
+  "sync.google_privacy": "Google gestiona el inicio de sesión. Nunca vemos tu contraseña de Google ni tus archivos, y no guardamos ninguno de tus datos: los boletos permanecen en tu propio Drive y la clave de inicio de sesión permanece en este dispositivo.",
+  "sync.connected_google": "Conectado a Google Drive",
+  "sync.google_expired": "El inicio de sesión de Google ha caducado. Inicia sesión de nuevo para seguir sincronizando.",
+  "sync.google_again": "Iniciar sesión de nuevo"
 }

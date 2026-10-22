@@ -294,5 +294,13 @@
   "sync.error": "Sinkronizacija nije uspjela: {err}",
   "app.android_permission": "Dopusti aplikaciji instalaciju ažuriranja (na stranici koja se otvorila) i ponovno pritisni “Instaliraj i ponovno pokreni”.",
   "app.android_installing": "Preuzimanje je gotovo. Potvrdi instalaciju u Androidovu prozoru.",
-  "sync.no_data": "Ne čuvamo nikakve tvoje podatke: listići se spremaju samo na tvoj GitHub račun, a prijavu u potpunosti obrađuje GitHub."
+  "sync.no_data": "Ne čuvamo nikakve tvoje podatke: listići se spremaju samo na tvoj GitHub račun, a prijavu u potpunosti obrađuje GitHub.",
+  "sync.provider": "Spremi listiće u",
+  "sync.google_intro": "Prijavi se svojim Google računom. Listići se spremaju u skrivenu mapu ove aplikacije u tvom vlastitom Google Driveu, a aplikacija vidi samo tu jednu datoteku, nikada tvoje ostale datoteke.",
+  "sync.google_btn": "Prijavi se putem Googlea",
+  "sync.google_wait": "Čekam prijavu u tvom pregledniku…",
+  "sync.google_privacy": "Prijavu obrađuje Google. Nikada ne vidimo tvoju Google lozinku ni tvoje datoteke i ne čuvamo nikakve tvoje podatke: listići ostaju u tvom vlastitom Driveu, a ključ za prijavu ostaje na ovom uređaju.",
+  "sync.connected_google": "Povezano s Google Driveom",
+  "sync.google_expired": "Google prijava je istekla. Prijavi se ponovno kako bi se sinkronizacija nastavila.",
+  "sync.google_again": "Prijavi se ponovno"
 }

@@ -294,5 +294,13 @@
   "sync.error": "Synchronizacja nie powiodła się: {err}",
   "app.android_permission": "Zezwól aplikacji na instalowanie aktualizacji (na otwartej stronie) i naciśnij ponownie „Zainstaluj i uruchom ponownie”.",
   "app.android_installing": "Pobieranie zakończone. Potwierdź instalację w oknie Androida.",
-  "sync.no_data": "Nie przechowujemy żadnych Twoich danych: kupony są zapisane tylko na Twoim koncie GitHub, a logowanie w całości obsługuje GitHub."
+  "sync.no_data": "Nie przechowujemy żadnych Twoich danych: kupony są zapisane tylko na Twoim koncie GitHub, a logowanie w całości obsługuje GitHub.",
+  "sync.provider": "Przechowuj kupony w",
+  "sync.google_intro": "Zaloguj się własnym kontem Google. Kupony są zapisywane w ukrytym folderze tej aplikacji w Twoim własnym Google Drive, a aplikacja widzi tylko ten jeden plik, nigdy Twoich innych plików.",
+  "sync.google_btn": "Zaloguj się przez Google",
+  "sync.google_wait": "Czekam na zalogowanie w przeglądarce…",
+  "sync.google_privacy": "Logowaniem zajmuje się Google. Nigdy nie widzimy Twojego hasła do Google ani Twoich plików i nie przechowujemy żadnych Twoich danych: kupony zostają w Twoim własnym Drive, a klucz logowania zostaje na tym urządzeniu.",
+  "sync.connected_google": "Połączono z Google Drive",
+  "sync.google_expired": "Logowanie do Google wygasło. Zaloguj się ponownie, aby kontynuować synchronizację.",
+  "sync.google_again": "Zaloguj się ponownie"
 }

@@ -294,5 +294,13 @@
   "sync.error": "Synkningen misslyckades: {err}",
   "app.android_permission": "Tillåt att appen installerar uppdateringar (på sidan som öppnades) och tryck på “Installera och starta om” igen.",
   "app.android_installing": "Nedladdningen är klar. Bekräfta installationen i Android-fönstret.",
-  "sync.no_data": "Vi sparar ingen av dina data: kupongerna lagras bara på ditt eget GitHub-konto och inloggningen sköts helt av GitHub."
+  "sync.no_data": "Vi sparar ingen av dina data: kupongerna lagras bara på ditt eget GitHub-konto och inloggningen sköts helt av GitHub.",
+  "sync.provider": "Spara biljetterna i",
+  "sync.google_intro": "Logga in med ditt eget Google-konto. Biljetterna sparas i en dold mapp för den här appen i din egen Google Drive, och appen kan bara se just den filen, aldrig dina andra filer.",
+  "sync.google_btn": "Logga in med Google",
+  "sync.google_wait": "Väntar på inloggningen i webbläsaren…",
+  "sync.google_privacy": "Inloggningen sköts av Google. Vi ser aldrig ditt Google-lösenord eller dina filer, och vi sparar ingen av dina data: biljetterna ligger kvar i din egen Drive och inloggningsnyckeln stannar på den här enheten.",
+  "sync.connected_google": "Ansluten till Google Drive",
+  "sync.google_expired": "Google-inloggningen har gått ut. Logga in igen för att fortsätta synkronisera.",
+  "sync.google_again": "Logga in igen"
 }

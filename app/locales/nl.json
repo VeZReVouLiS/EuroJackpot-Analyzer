@@ -294,5 +294,13 @@
   "sync.error": "Synchroniseren mislukt: {err}",
   "app.android_permission": "Sta de app toe om updates te installeren (op de pagina die is geopend) en druk nogmaals op “Installeren en opnieuw starten”.",
   "app.android_installing": "De download is klaar. Bevestig de installatie in het Android-venster.",
-  "sync.no_data": "Wij bewaren geen enkel gegeven van je: de tickets worden alleen opgeslagen in je eigen GitHub-account en het inloggen wordt volledig door GitHub afgehandeld."
+  "sync.no_data": "Wij bewaren geen enkel gegeven van je: de tickets worden alleen opgeslagen in je eigen GitHub-account en het inloggen wordt volledig door GitHub afgehandeld.",
+  "sync.provider": "Bewaar de tickets in",
+  "sync.google_intro": "Log in met je eigen Google-account. De tickets worden opgeslagen in een verborgen map van deze app in je eigen Google Drive, en de app ziet alleen dat ene bestand, nooit je andere bestanden.",
+  "sync.google_btn": "Inloggen met Google",
+  "sync.google_wait": "Wachten op het inloggen in je browser…",
+  "sync.google_privacy": "Het inloggen wordt afgehandeld door Google. We zien nooit je Google-wachtwoord of je bestanden en we bewaren geen van je gegevens: de tickets blijven in je eigen Drive en de inlogsleutel blijft op dit apparaat.",
+  "sync.connected_google": "Verbonden met Google Drive",
+  "sync.google_expired": "De Google-aanmelding is verlopen. Log opnieuw in om te blijven synchroniseren.",
+  "sync.google_again": "Opnieuw inloggen"
 }

@@ -294,5 +294,13 @@
   "sync.error": "Sünkroonimine ebaõnnestus: {err}",
   "app.android_permission": "Luba rakendusel uuendusi installida (avanenud lehel) ja vajuta uuesti „Installi ja taaskäivita“.",
   "app.android_installing": "Allalaadimine on lõppenud. Kinnita installimine Androidi aknas.",
-  "sync.no_data": "Me ei hoia ühtegi sinu andmetest: piletid salvestatakse ainult sinu enda GitHubi kontole ja sisselogimist haldab täielikult GitHub."
+  "sync.no_data": "Me ei hoia ühtegi sinu andmetest: piletid salvestatakse ainult sinu enda GitHubi kontole ja sisselogimist haldab täielikult GitHub.",
+  "sync.provider": "Hoia pileteid teenuses",
+  "sync.google_intro": "Logi sisse oma Google'i kontoga. Piletid salvestatakse selle rakenduse peidetud kausta sinu enda Google Drive'is ning rakendus näeb ainult seda ühte faili, mitte kunagi sinu teisi faile.",
+  "sync.google_btn": "Logi sisse Google'iga",
+  "sync.google_wait": "Ootan sisselogimist sinu brauseris…",
+  "sync.google_privacy": "Sisselogimist haldab Google. Me ei näe kunagi sinu Google'i parooli ega faile ning me ei säilita ühtegi sinu andmetest: piletid jäävad sinu enda Drive'i ja sisselogimisvõti jääb sellesse seadmesse.",
+  "sync.connected_google": "Ühendatud Google Drive'iga",
+  "sync.google_expired": "Google'i sisselogimine on aegunud. Logi uuesti sisse, et sünkroonimine jätkuks.",
+  "sync.google_again": "Logi uuesti sisse"
 }

@@ -294,5 +294,13 @@
   "sync.error": "Synchronizácia zlyhala: {err}",
   "app.android_permission": "Povoľ aplikácii inštalovať aktualizácie (na otvorenej stránke) a znova stlač „Nainštalovať a reštartovať“.",
   "app.android_installing": "Sťahovanie je hotové. Potvrď inštaláciu v okne Androidu.",
-  "sync.no_data": "Žiadne tvoje údaje neukladáme: tikety sú uložené len na tvojom vlastnom účte GitHub a prihlásenie zabezpečuje výlučne GitHub."
+  "sync.no_data": "Žiadne tvoje údaje neukladáme: tikety sú uložené len na tvojom vlastnom účte GitHub a prihlásenie zabezpečuje výlučne GitHub.",
+  "sync.provider": "Uchovávať kupóny v",
+  "sync.google_intro": "Prihlás sa vlastným účtom Google. Kupóny sa ukladajú do skrytého priečinka tejto aplikácie vo tvojom vlastnom Google Drive a aplikácia vidí iba tento jeden súbor, nikdy tvoje ostatné súbory.",
+  "sync.google_btn": "Prihlásiť sa cez Google",
+  "sync.google_wait": "Čakám na prihlásenie vo tvojom prehliadači…",
+  "sync.google_privacy": "Prihlásenie zabezpečuje Google. Nikdy nevidíme tvoje heslo ku Google ani tvoje súbory a neukladáme žiadne tvoje údaje: kupóny zostávajú vo tvojom vlastnom Drive a prihlasovací kľúč zostáva v tomto zariadení.",
+  "sync.connected_google": "Pripojené ku Google Drive",
+  "sync.google_expired": "Prihlásenie do Google vypršalo. Prihlás sa znova, aby synchronizácia pokračovala.",
+  "sync.google_again": "Prihlásiť sa znova"
 }

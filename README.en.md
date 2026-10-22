@@ -144,13 +144,20 @@ The **country**, **language** (20 languages) and **theme** (dark / light) change
 - **Check and install a new version** (bottom of the page): when a new version exists its changes are shown. “Install and restart” downloads the new zip from GitHub, verifies the SHA-256, replaces the files (the `data` folder with your data and tickets is left untouched) and reopens the app.
 
 #### Ticket sync
-To have the **same tickets** on your computer, phone and Home Assistant, use the **Ticket sync** section in Settings (in the picture above). The tickets are stored in a **private gist** in your own GitHub account, with no other server involved.
+To have the **same tickets** on your computer, phone and Home Assistant, use the **Ticket sync** section in Settings (in the picture above). The tickets are stored **in your own account**, with no server of ours and **without us keeping any of your data**. You choose where:
 
+**GitHub (private gist)** - works on all devices and in Home Assistant:
 1. Press **“Create a token on GitHub”** and sign in. The page opens with the **gist** permission already selected.
 2. Press **Generate token** at the bottom, copy the token and **paste it** into the app. Press **Connect**.
 3. Do the same, with **the same token**, on every device (and in Home Assistant, in the options of the integration).
 
-From then on every change to a ticket (new, “I played it”, delete) syncs by itself a few seconds later, and when the app starts. If you change the same ticket on two devices the most recent change wins. The token stays **only on the device** and only gives access to gists. You can revoke it at any time on GitHub (Settings → Developer settings → Tokens).
+**Google Drive** - for Windows, Mac and web / iPhone (not yet for Android and Home Assistant):
+1. Choose **Google Drive** and press **“Sign in with Google”**. Google's page opens and you sign in with **your own** account.
+2. The tickets go into a **hidden folder of the app** in your own Drive. The app sees only that one file, never your other files. It asks for no password, email or profile.
+3. On the computer the sign-in stays active. On web / iPhone Google gives a sign-in that expires after about an hour, and when it does “Sign in again” shows in Settings.
+4. You can revoke the access at any time at myaccount.google.com/permissions.
+
+From then on every change to a ticket (new, “I played it”, delete) syncs by itself a few seconds later, and when the app starts. If you change the same ticket on two devices the most recent change wins. The token or the sign-in key stays **only on the device**. Privacy policy: https://vezrevoulis.github.io/EuroJackpot-Analyzer/privacy.html
 
 ### 8. If the online update does not work
 The app **never blocks**. It has the history built in, so it always opens with data. If there is no data at all, a screen appears where you can **load a draws file manually** (button or drag & drop), try again or run the **Connection check**.

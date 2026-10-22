@@ -294,5 +294,13 @@
   "sync.error": "Synchronisierung fehlgeschlagen: {err}",
   "app.android_permission": "Erlaube der App, Updates zu installieren (auf der geöffneten Seite), und tippe erneut auf „Installieren und neu starten“.",
   "app.android_installing": "Der Download ist fertig. Bestätige die Installation im Android-Fenster.",
-  "sync.no_data": "Wir speichern keine deiner Daten: Die Scheine liegen nur in deinem eigenen GitHub-Konto und die Anmeldung läuft vollständig über GitHub."
+  "sync.no_data": "Wir speichern keine deiner Daten: Die Scheine liegen nur in deinem eigenen GitHub-Konto und die Anmeldung läuft vollständig über GitHub.",
+  "sync.provider": "Scheine speichern in",
+  "sync.google_intro": "Melde dich mit deinem eigenen Google-Konto an. Die Scheine werden in einem versteckten Ordner dieser App in deinem eigenen Google Drive gespeichert, und die App sieht nur diese eine Datei, nie deine anderen Dateien.",
+  "sync.google_btn": "Mit Google anmelden",
+  "sync.google_wait": "Warte auf die Anmeldung in deinem Browser …",
+  "sync.google_privacy": "Die Anmeldung läuft über Google. Wir sehen nie dein Google-Passwort oder deine Dateien und speichern keine deiner Daten: Die Scheine bleiben in deinem eigenen Drive und der Anmeldeschlüssel bleibt auf diesem Gerät.",
+  "sync.connected_google": "Mit Google Drive verbunden",
+  "sync.google_expired": "Die Google-Anmeldung ist abgelaufen. Melde dich erneut an, damit die Synchronisierung weiterläuft.",
+  "sync.google_again": "Erneut anmelden"
 }

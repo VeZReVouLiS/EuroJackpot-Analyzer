@@ -294,5 +294,13 @@
   "sync.error": "Samstilling mistókst: {err}",
   "app.android_permission": "Leyfðu forritinu að setja upp uppfærslur (á síðunni sem opnaðist) og ýttu aftur á „Setja upp og endurræsa“.",
   "app.android_installing": "Niðurhali er lokið. Staðfestu uppsetninguna í Android-glugganum.",
-  "sync.no_data": "Við geymum engin gögn um þig: miðarnir eru aðeins vistaðir á þínum eigin GitHub-reikningi og GitHub sér alfarið um innskráninguna."
+  "sync.no_data": "Við geymum engin gögn um þig: miðarnir eru aðeins vistaðir á þínum eigin GitHub-reikningi og GitHub sér alfarið um innskráninguna.",
+  "sync.provider": "Vista miðana í",
+  "sync.google_intro": "Skráðu þig inn með þínum eigin Google-reikningi. Miðarnir eru vistaðir í falinni möppu þessa forrits í þínu eigin Google Drive og forritið sér aðeins þessa einu skrá, aldrei aðrar skrár þínar.",
+  "sync.google_btn": "Skrá inn með Google",
+  "sync.google_wait": "Bíð eftir innskráningu í vafranum þínum…",
+  "sync.google_privacy": "Google sér um innskráninguna. Við sjáum aldrei Google-lykilorðið þitt eða skrárnar þínar og við geymum engin gögn frá þér: miðarnir haldast í þínu eigin Drive og innskráningarlykillinn helst í þessu tæki.",
+  "sync.connected_google": "Tengt við Google Drive",
+  "sync.google_expired": "Google-innskráningin er útrunnin. Skráðu þig inn aftur til að halda áfram að samstilla.",
+  "sync.google_again": "Skrá inn aftur"
 }

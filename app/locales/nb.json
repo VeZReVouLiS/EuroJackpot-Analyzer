@@ -294,5 +294,13 @@
   "sync.error": "Synkroniseringen mislyktes: {err}",
   "app.android_permission": "Tillat at appen installerer oppdateringer (på siden som ble åpnet), og trykk på “Installer og start på nytt” igjen.",
   "app.android_installing": "Nedlastingen er ferdig. Bekreft installasjonen i Android-vinduet.",
-  "sync.no_data": "Vi lagrer ingen av dataene dine: kupongene lagres bare på din egen GitHub-konto, og innloggingen håndteres helt av GitHub."
+  "sync.no_data": "Vi lagrer ingen av dataene dine: kupongene lagres bare på din egen GitHub-konto, og innloggingen håndteres helt av GitHub.",
+  "sync.provider": "Lagre kupongene i",
+  "sync.google_intro": "Logg på med din egen Google-konto. Kupongene lagres i en skjult mappe for denne appen i din egen Google Drive, og appen kan bare se den ene filen, aldri de andre filene dine.",
+  "sync.google_btn": "Logg på med Google",
+  "sync.google_wait": "Venter på innloggingen i nettleseren din…",
+  "sync.google_privacy": "Innloggingen håndteres av Google. Vi ser aldri Google-passordet eller filene dine, og vi lagrer ingen av dataene dine: kupongene blir i din egen Drive, og innloggingsnøkkelen blir på denne enheten.",
+  "sync.connected_google": "Koblet til Google Drive",
+  "sync.google_expired": "Google-innloggingen har utløpt. Logg på igjen for å fortsette synkroniseringen.",
+  "sync.google_again": "Logg på igjen"
 }

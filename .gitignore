@@ -9,3 +9,5 @@ build/work/
 
 *.zip
 site/
+
+app/_google_secret.py

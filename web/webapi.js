@@ -5,7 +5,7 @@ import * as core from "./core.js";
 import { openStore } from "./store.js";
 import { VERSION, REPO, PAGES } from "./version.js";
 
-const DEFAULTS = { lang: "el", country: "", prices: {}, sync_token: "", sync_gist: "", theme: "dark", auto_update: true, check_app_updates: true,
+const DEFAULTS = { lang: "el", country: "", prices: {}, sync_token: "", sync_gist: "", sync_provider: "github", google_tokens: {}, sync_file: "", theme: "dark", auto_update: true, check_app_updates: true,
   period: "all", columns: 5, algo: core.AUTO_TICKET };
 const isNative = () => !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 const plugin = (name) => (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) || null;
@@ -15,6 +15,88 @@ const SYNC_FILE = "eurojackpot-tickets.json", SYNC_DESC = "EuroJackpot Analyzer 
 const nowIso = () => { const n = new Date(), p = (x) => String(x).padStart(2, "0"); return `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`; };
 const isNewer = (a, b) => { const x = String(a).replace(/^v/, "").split(".").map(Number), y = String(b).replace(/^v/, "").split(".").map(Number);
   for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
+
+
+/* ---- where the synced tickets live: both give pull() (the document or null) and push(doc), and `id` */
+const GOOGLE_WEB_CLIENT_ID = "525620810871-0kr1mrcnetva3g01dgogna3ahlsrqo1d.apps.googleusercontent.com";   // public (Google Cloud project "EuroJackpot Analyzer")
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.appdata";                                         // only the hidden app data folder
+const DRIVE = "https://www.googleapis.com/drive/v3", UPLOAD = "https://www.googleapis.com/upload/drive/v3";
+const googleAvailable = () => !!GOOGLE_WEB_CLIENT_ID && !isNative();     // the Android app needs a native sign-in (not built yet)
+let gisPromise = null;
+const loadGis = () => gisPromise || (gisPromise = new Promise((resolve, reject) => {
+  if (window.google && window.google.accounts && window.google.accounts.oauth2) return resolve();
+  const sc = document.createElement("script");
+  sc.src = "https://accounts.google.com/gsi/client"; sc.async = true; sc.onload = () => resolve();
+  sc.onerror = () => { gisPromise = null; reject(new Error("No connection to Google.")); };
+  document.head.appendChild(sc);
+}));
+
+function githubRemote(s) {
+  let gistId = s.sync_gist || null;
+  const call = async (method, path, body) => {
+    let r;
+    try {
+      r = await fetch("https://api.github.com" + path, { method, headers: { Authorization: `Bearer ${s.sync_token.trim()}`, Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    } catch (e) { throw new Error(`No connection to GitHub: ${e.message || e}`); }
+    if (r.status === 401) throw new Error("The GitHub token is not valid (401).");
+    if (r.status === 403) throw new Error("GitHub refused the request (403): the token needs the gist permission.");
+    if (r.status === 404 && gistId) throw new Error("The sync gist was not found (404). Disconnect and connect again.");
+    if (!r.ok) throw new Error(`GitHub error ${r.status}`);
+    return r.json();
+  };
+  return {
+    get id() { return gistId; },
+    async pull() {
+      if (!gistId) {
+        for (const g of (await call("GET", "/gists?per_page=100")) || []) if (g.files && g.files[SYNC_FILE]) { gistId = g.id; break; }
+        if (!gistId) { const g = await call("POST", "/gists", { description: SYNC_DESC, public: false, files: { [SYNC_FILE]: { content: JSON.stringify(core.syncDoc([], {})) } } }); gistId = g.id; }
+      }
+      const g = await call("GET", `/gists/${gistId}`), f = g.files && g.files[SYNC_FILE];
+      if (!f) return null;
+      if (f.truncated) throw new Error("The sync file is too large.");
+      try { return f.content && f.content.trim() ? JSON.parse(f.content) : null; } catch { throw new Error("The sync file is damaged."); }
+    },
+    async push(doc) { await call("PATCH", `/gists/${gistId}`, { files: { [SYNC_FILE]: { content: JSON.stringify(doc) } } }); },
+  };
+}
+
+function driveRemote(s) {
+  let id = s.sync_file || null;
+  const tok = s.google_tokens && s.google_tokens.access_token;
+  const expired = () => { const e = new Error("The Google sign-in has expired. Sign in with Google again."); e.code = "google_expired"; return e; };
+  if (!tok || Date.now() >= (s.google_tokens.expires_at || 0)) throw expired();
+  const call = async (method, url, body, type, raw) => {
+    let r;
+    try { r = await fetch(url, { method, headers: { Authorization: `Bearer ${tok}`, ...(type ? { "Content-Type": type } : {}) }, body }); }
+    catch (e) { throw new Error(`No connection to Google Drive: ${e.message || e}`); }
+    if (r.status === 401 || r.status === 403) throw expired();
+    if (r.status === 404 && id) throw new Error("The sync file was not found in Google Drive. Disconnect and connect again.");
+    if (!r.ok) throw new Error(`Google Drive error ${r.status}`);
+    const t = await r.text();
+    return raw ? t : (t.trim() ? JSON.parse(t) : null);
+  };
+  return {
+    get id() { return id; },
+    async pull() {
+      if (!id) {
+        const q = new URLSearchParams({ spaces: "appDataFolder", q: `name = '${SYNC_FILE}' and trashed = false`, fields: "files(id,modifiedTime)", orderBy: "modifiedTime desc", pageSize: "5" });
+        const files = ((await call("GET", `${DRIVE}/files?${q}`)) || {}).files || [];
+        id = files[0] ? files[0].id : null;
+      }
+      if (!id) {
+        const b = "ejb" + Math.random().toString(16).slice(2);
+        const meta = JSON.stringify({ name: SYNC_FILE, parents: ["appDataFolder"], mimeType: "application/json" });
+        const body = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(core.syncDoc([], {}))}\r\n--${b}--`;
+        id = (await call("POST", `${UPLOAD}/files?uploadType=multipart&fields=id`, body, `multipart/related; boundary=${b}`)).id;
+        return null;
+      }
+      const text = await call("GET", `${DRIVE}/files/${id}?alt=media`, null, null, true);
+      try { return text && text.trim() ? JSON.parse(text) : null; } catch { throw new Error("The sync file is damaged."); }
+    },
+    async push(doc) { await call("PATCH", `${UPLOAD}/files/${id}?uploadType=media`, JSON.stringify(doc), "application/json"); },
+  };
+}
 
 export async function createApi() {
   const store = await openStore();
@@ -146,7 +228,7 @@ export async function createApi() {
       return { count: draws.length, last_draw: draws.length ? draws[draws.length - 1].date : null, last_update: store.get("last_update", null),
         seed: seedInfo, settings: s, price: effectivePrice(s), default_price: defaultPrice(s.country), max_columns: core.MAX_COLUMNS,
         algos: core.ALGOS, euro_max: core.currentEuroMax(), version: VERSION, repo_configured: true,
-        unseen_wins: (await api.get_tickets()).unseen_wins, sync: !!s.sync_token, web: true, native: isNative() };
+        unseen_wins: (await api.get_tickets()).unseen_wins, sync: (await api.sync_status()).connected, web: true, native: isNative() };
     },
 
     /* draw data updates */
@@ -244,37 +326,51 @@ export async function createApi() {
       await saveTickets(tickets().filter((x) => x.id !== Number(id))); return true;
     },
 
-    /* ticket sync between devices through a private gist of the user */
-    async sync_status() { const s = settings(); return { connected: !!s.sync_token, gist: s.sync_gist || null, last: store.get("sync_last", null) }; },
+    /* ticket sync between devices: a private gist of the user (GitHub) or the hidden app data folder of the user's Google Drive */
+    async sync_status() {
+      const s = settings(), google = s.sync_provider === "google", tok = s.google_tokens && s.google_tokens.access_token;
+      return { connected: google ? !!tok : !!s.sync_token, provider: google ? "google" : "github",
+        needs_signin: google && !!tok && Date.now() >= (s.google_tokens.expires_at || 0),
+        gist: s.sync_gist || null, google_available: googleAvailable(), last: store.get("sync_last", null) };
+    },
     async sync_connect(token) {
       token = String(token || "").trim();
       if (!token) throw new Error("token is empty");
-      await api.set_setting("sync_token", token); await api.set_setting("sync_gist", "");
+      await api.set_setting("sync_provider", "github"); await api.set_setting("sync_token", token); await api.set_setting("sync_gist", "");
       try { return await api.sync_now(); } catch (e) { await api.set_setting("sync_token", ""); throw e; }
     },
-    async sync_disconnect() { await api.set_setting("sync_token", ""); await api.set_setting("sync_gist", ""); return api.sync_status(); },
+    async sync_disconnect() {
+      for (const k of ["sync_token", "sync_gist", "sync_file"]) await api.set_setting(k, "");
+      await api.set_setting("google_tokens", {});
+      return api.sync_status();
+    },
+    /* Google sign-in in the browser (Google Identity Services, token model): the script is loaded early so that the pop-up opens
+       right inside the click. The token lasts about an hour, then "Sign in again" is shown in the settings. */
+    async google_prepare() { await loadGis(); return true; },
+    async google_connect_start() {
+      if (!googleAvailable()) throw new Error("Google sign-in is not available here");
+      await loadGis();
+      return new Promise((resolve, reject) => {
+        const client = window.google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_WEB_CLIENT_ID, scope: DRIVE_SCOPE,
+          callback: async (resp) => {
+            if (resp.error || !resp.access_token) return reject(new Error(resp.error_description || resp.error || "sign-in failed"));
+            await api.set_setting("sync_provider", "google");
+            await api.set_setting("google_tokens", { access_token: resp.access_token, expires_at: Date.now() + (Number(resp.expires_in) || 3600) * 1000 - 60000 });
+            await api.set_setting("sync_file", "");
+            try { resolve(await api.sync_now()); } catch (e) { reject(e); }
+          },
+          error_callback: (e) => reject(new Error(e && e.type === "popup_closed" ? "The Google sign-in was cancelled." : `Google sign-in failed (${(e && e.type) || "error"}).`)),
+        });
+        client.requestAccessToken({ prompt: "" });
+      });
+    },
     async sync_now() {
       const s = settings();
-      if (!s.sync_token) throw new Error("not connected");
-      let gistId = s.sync_gist || null, remote = null;
-      const call = async (method, path, body) => {
-        let r;
-        try {
-          r = await fetch("https://api.github.com" + path, { method, headers: { Authorization: `Bearer ${s.sync_token.trim()}`, Accept: "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
-        } catch (e) { throw new Error(`No connection to GitHub: ${e.message || e}`); }
-        if (r.status === 401) throw new Error("The GitHub token is not valid (401).");
-        if (r.status === 403) throw new Error("GitHub refused the request (403): the token needs the gist permission.");
-        if (r.status === 404 && gistId) throw new Error("The sync gist was not found (404). Disconnect and connect again.");
-        if (!r.ok) throw new Error(`GitHub error ${r.status}`);
-        return r.json();
-      };
-      if (!gistId) {
-        for (const g of (await call("GET", "/gists?per_page=100")) || []) if (g.files && g.files[SYNC_FILE]) { gistId = g.id; break; }
-        if (!gistId) { const g = await call("POST", "/gists", { description: SYNC_DESC, public: false, files: { [SYNC_FILE]: { content: JSON.stringify(core.syncDoc([], {})) } } }); gistId = g.id; }
-      }
-      const g = await call("GET", `/gists/${gistId}`), f = g.files && g.files[SYNC_FILE];
-      if (f) { if (f.truncated) throw new Error("The sync file is too large."); try { remote = f.content && f.content.trim() ? JSON.parse(f.content) : null; } catch { throw new Error("The sync file is damaged."); } }
+      if (!(await api.sync_status()).connected) throw new Error("not connected");
+      const google = s.sync_provider === "google";
+      const src = google ? driveRemote(s) : githubRemote(s);
+      const remote = await src.pull();
       const all = tickets(), tombs0 = store.get("tombstones", {});
       const { tickets: merged, tombstones } = core.mergeTickets(all, remote, tombs0);
       let added = 0, updated = 0, seq = store.get("ticket_seq", 1);
@@ -291,8 +387,8 @@ export async function createApi() {
       await saveTickets(next); await store.set("ticket_seq", seq); await store.set("tombstones", tombstones);
       const doc = core.syncDoc(merged, tombstones);
       const pushed = !remote || JSON.stringify({ t: remote.tickets, d: remote.tombstones }) !== JSON.stringify({ t: doc.tickets, d: doc.tombstones });
-      if (pushed) await call("PATCH", `/gists/${gistId}`, { files: { [SYNC_FILE]: { content: JSON.stringify(doc) } } });
-      await api.set_setting("sync_gist", gistId); await store.set("sync_last", nowIso());
+      if (pushed) await src.push(doc);
+      await api.set_setting(google ? "sync_file" : "sync_gist", src.id); await store.set("sync_last", nowIso());
       evaluateTickets();
       return { added, updated, removed, pushed, tickets: merged.length, ...(await api.sync_status()) };
     },

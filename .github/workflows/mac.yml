@@ -38,6 +38,11 @@ jobs:
         run: python -m pip install -r requirements.txt
       - name: Tests
         run: python -m pytest -q
+      - name: Google sign-in secret (kept out of the repository)
+        env:
+          GOOGLE_SECRET: ${{ secrets.GOOGLE_DESKTOP_CLIENT_SECRET }}
+        run: |
+          if [ -n "$GOOGLE_SECRET" ]; then echo "SECRET = \"$GOOGLE_SECRET\"" > app/_google_secret.py; fi
       - name: Build, sign (ad-hoc) and self-test the app
         run: sh build/build_mac.sh
       - uses: actions/upload-artifact@v4

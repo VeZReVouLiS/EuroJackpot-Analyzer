@@ -294,5 +294,13 @@
   "sync.error": "Sinchronizuoti nepavyko: {err}",
   "app.android_permission": "Leisk programai diegti atnaujinimus (atsidariusiame puslapyje) ir dar kartą spausk „Įdiegti ir paleisti iš naujo“.",
   "app.android_installing": "Atsisiuntimas baigtas. Patvirtink diegimą Android lange.",
-  "sync.no_data": "Mes nesaugome jokių tavo duomenų: bilietai saugomi tik tavo paties GitHub paskyroje, o prisijungimą visiškai tvarko GitHub."
+  "sync.no_data": "Mes nesaugome jokių tavo duomenų: bilietai saugomi tik tavo paties GitHub paskyroje, o prisijungimą visiškai tvarko GitHub.",
+  "sync.provider": "Laikyti bilietus paslaugoje",
+  "sync.google_intro": "Prisijunk su savo Google paskyra. Bilietai saugomi paslėptame šios programėlės aplanke tavo paties Google Drive, o programėlė mato tik tą vieną failą, niekada kitų tavo failų.",
+  "sync.google_btn": "Prisijungti su Google",
+  "sync.google_wait": "Laukiama prisijungimo tavo naršyklėje…",
+  "sync.google_privacy": "Prisijungimą tvarko Google. Mes niekada nematome tavo Google slaptažodžio ar failų ir nesaugome jokių tavo duomenų: bilietai lieka tavo paties Drive, o prisijungimo raktas lieka šiame įrenginyje.",
+  "sync.connected_google": "Prisijungta prie Google Drive",
+  "sync.google_expired": "Prisijungimas prie Google nebegalioja. Prisijunk iš naujo, kad sinchronizavimas tęstųsi.",
+  "sync.google_again": "Prisijungti iš naujo"
 }

@@ -294,5 +294,13 @@
   "sync.error": "A szinkronizálás sikertelen: {err}",
   "app.android_permission": "Engedélyezd az alkalmazásnak a frissítések telepítését (a megnyílt oldalon), majd nyomd meg újra a „Telepítés és újraindítás” gombot.",
   "app.android_installing": "A letöltés kész. Erősítsd meg a telepítést az Android ablakában.",
-  "sync.no_data": "Egyetlen adatodat sem tároljuk: a szelvények csak a saját GitHub-fiókodban vannak, a bejelentkezést pedig teljes egészében a GitHub kezeli."
+  "sync.no_data": "Egyetlen adatodat sem tároljuk: a szelvények csak a saját GitHub-fiókodban vannak, a bejelentkezést pedig teljes egészében a GitHub kezeli.",
+  "sync.provider": "Szelvények tárolása itt:",
+  "sync.google_intro": "Jelentkezz be a saját Google-fiókoddal. A szelvények az alkalmazás egy rejtett mappájában tárolódnak a saját Google Drive-odon, és az alkalmazás csak ezt az egy fájlt látja, soha a többi fájlodat.",
+  "sync.google_btn": "Bejelentkezés Google-fiókkal",
+  "sync.google_wait": "Várakozás a bejelentkezésre a böngészőben…",
+  "sync.google_privacy": "A bejelentkezést a Google kezeli. Soha nem látjuk a Google-jelszavadat vagy a fájljaidat, és nem tárolunk semmilyen adatodat: a szelvények a saját Drive-odon maradnak, a bejelentkezési kulcs pedig ezen az eszközön marad.",
+  "sync.connected_google": "Csatlakoztatva a Google Drive-hoz",
+  "sync.google_expired": "A Google-bejelentkezés lejárt. Jelentkezz be újra, hogy a szinkronizálás folytatódjon.",
+  "sync.google_again": "Jelentkezz be újra"
 }

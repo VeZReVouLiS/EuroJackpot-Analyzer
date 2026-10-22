@@ -294,5 +294,13 @@
   "sync.error": "Synkronointi epäonnistui: {err}",
   "app.android_permission": "Salli sovelluksen asentaa päivityksiä (avautuvalla sivulla) ja paina ”Asenna ja käynnistä uudelleen” uudelleen.",
   "app.android_installing": "Lataus on valmis. Vahvista asennus Androidin ikkunassa.",
-  "sync.no_data": "Emme säilytä mitään tietojasi: kupongit tallennetaan vain omalle GitHub-tilillesi ja kirjautumisen hoitaa kokonaan GitHub."
+  "sync.no_data": "Emme säilytä mitään tietojasi: kupongit tallennetaan vain omalle GitHub-tilillesi ja kirjautumisen hoitaa kokonaan GitHub.",
+  "sync.provider": "Tallenna liput palveluun",
+  "sync.google_intro": "Kirjaudu sisään omalla Google-tililläsi. Liput tallennetaan tämän sovelluksen piilotettuun kansioon omassa Google Drivessasi, ja sovellus näkee vain sen yhden tiedoston, ei koskaan muita tiedostojasi.",
+  "sync.google_btn": "Kirjaudu sisään Googlella",
+  "sync.google_wait": "Odotetaan kirjautumista selaimessasi…",
+  "sync.google_privacy": "Kirjautumisen hoitaa Google. Emme koskaan näe Google-salasanaasi tai tiedostojasi emmekä säilytä mitään tietojasi: liput pysyvät omassa Drivessäsi ja kirjautumisavain pysyy tällä laitteella.",
+  "sync.connected_google": "Yhdistetty Google Driveen",
+  "sync.google_expired": "Googlen kirjautuminen on vanhentunut. Kirjaudu sisään uudelleen, jotta synkronointi jatkuu.",
+  "sync.google_again": "Kirjaudu sisään uudelleen"
 }

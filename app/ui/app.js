@@ -739,13 +739,31 @@ function renderSettings() {
 async function drawSync() {
   const box = $("#sync-card"); if (!box) return;
   const st = await call("sync_status");
-  if (!st.connected) {
-    box.innerHTML = `<div>${tr("sync.intro")}</div>
+  const prov = st.connected ? st.provider : (st.google_available ? (S.syncProvider || st.provider || "github") : "github");
+  const chips = !st.connected && st.google_available
+    ? `<div class="chips" style="margin:0 0 .9rem"><span class="muted small" style="align-self:center">${tr("sync.provider")}:</span>${[["github", "GitHub"], ["google", "Google Drive"]].map(([k, l]) => `<button class="chip ${k === prov ? "active" : ""}" data-prov="${k}">${l}</button>`).join("")}</div>` : "";
+  const notes = prov === "google" ? `<div class="note">${tr("sync.google_privacy")}</div>` : `<div class="note">${tr("sync.privacy")}</div><div class="note">${tr("sync.no_data")}</div>`;
+  if (st.connected) {
+    const label = prov === "google" ? tr("sync.connected_google") : tr("sync.connected");
+    const again = st.needs_signin ? `<div class="note" style="color:var(--warn, #f59e0b)">⚠ ${tr("sync.google_expired")}</div><div class="btn-row"><button id="g-again" class="btn primary">${tr("sync.google_again")}</button></div>` : "";
+    box.innerHTML = `<div class="strong" style="color:var(--good)">✔ ${label}</div>
+      <div class="muted small" style="margin:.3rem 0 .8rem">${tr("sync.last")}: ${st.last ? fmtDT(st.last) : tr("top.never")}</div>${again}
+      <div class="btn-row"><button id="sync-now" class="btn primary">🔄 ${tr("sync.now")}</button><button id="sync-off" class="btn">${tr("sync.disconnect")}</button></div>${notes}`;
+    $("#sync-now").onclick = async () => { const b = $("#sync-now"); b.disabled = true; await runSync(false); drawSync(); };
+    $("#sync-off").onclick = async () => { await rawCall("sync_disconnect"); await refreshInfo(); drawSync(); };
+    if ($("#g-again")) $("#g-again").onclick = () => googleSignIn($("#g-again"));
+    return;
+  }
+  if (prov === "google") {
+    box.innerHTML = `${chips}<div>${tr("sync.google_intro")}</div>
+      <div class="btn-row"><button id="g-signin" class="btn primary">${tr("sync.google_btn")}</button></div><div id="g-msg" class="note"></div>${notes}`;
+    $("#g-signin").onclick = () => googleSignIn($("#g-signin"));
+    if (S.info.web) rawCall("google_prepare").catch(() => {});          // the web sign-in pop-up must open right inside the click
+  } else {
+    box.innerHTML = `${chips}<div>${tr("sync.intro")}</div>
       <ol class="about-list" style="margin:.8rem 0">${tr("sync.steps").split("\n").map(l => `<li>${esc(l)}</li>`).join("")}</ol>
       <div class="btn-row"><button id="sync-create" class="btn">🔑 ${tr("sync.create")}</button></div>
-      <div class="sync-row"><input id="sync-token" type="password" autocomplete="off" spellcheck="false" placeholder="${tr("sync.token_ph")}"><button id="sync-connect" class="btn primary">${tr("sync.connect")}</button></div>
-      <div class="note">${tr("sync.privacy")}</div>
-      <div class="note">${tr("sync.no_data")}</div>`;
+      <div class="sync-row"><input id="sync-token" type="password" autocomplete="off" spellcheck="false" placeholder="${tr("sync.token_ph")}"><button id="sync-connect" class="btn primary">${tr("sync.connect")}</button></div>${notes}`;
     $("#sync-create").onclick = () => call("open_url", "https://github.com/settings/tokens/new?scopes=gist&description=EuroJackpot+Analyzer").catch(() => {});
     $("#sync-connect").onclick = async () => {
       const b = $("#sync-connect"); b.disabled = true; b.textContent = tr("sync.running");
@@ -753,15 +771,27 @@ async function drawSync() {
       catch (e) { toast(tr("sync.error", { err: e.message || String(e) })); }
       drawSync();
     };
-  } else {
-    box.innerHTML = `<div class="strong" style="color:var(--good)">✔ ${tr("sync.connected")}</div>
-      <div class="muted small" style="margin:.3rem 0 .8rem">${tr("sync.last")}: ${st.last ? fmtDT(st.last) : tr("top.never")}</div>
-      <div class="btn-row"><button id="sync-now" class="btn primary">🔄 ${tr("sync.now")}</button><button id="sync-off" class="btn">${tr("sync.disconnect")}</button></div>
-      <div class="note">${tr("sync.privacy")}</div>
-      <div class="note">${tr("sync.no_data")}</div>`;
-    $("#sync-now").onclick = async () => { const b = $("#sync-now"); b.disabled = true; await runSync(false); drawSync(); };
-    $("#sync-off").onclick = async () => { await rawCall("sync_disconnect"); await refreshInfo(); drawSync(); };
   }
+  $$("[data-prov]", box).forEach(b => b.onclick = () => { S.syncProvider = b.dataset.prov; drawSync(); });
+}
+/* Google sign-in. Desktop: the browser opens and the app polls until the sign-in is done. Web: the call returns when it is done. */
+async function googleSignIn(btn) {
+  btn.disabled = true;
+  const msg = $("#g-msg");
+  const finish = async (r) => { await refreshInfo(); toast(tr("sync.done", r)); drawSync(); };
+  const fail = (e) => { toast(tr("sync.error", { err: e.message || String(e) })); drawSync(); };
+  try {
+    const r = await rawCall("google_connect_start");
+    if (r && r.state === "waiting") {
+      if (msg) msg.textContent = tr("sync.google_wait");
+      const iv = setInterval(async () => {
+        const g = await rawCall("google_connect_status");
+        if (g.state === "waiting") return;
+        clearInterval(iv);
+        if (g.state === "error") fail(new Error(g.error)); else await finish(g.result);
+      }, 1500);
+    } else await finish(r);
+  } catch (e) { fail(e); }
 }
 async function exportData(fmt) {
   try {
