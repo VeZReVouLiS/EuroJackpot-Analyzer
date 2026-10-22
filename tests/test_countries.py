@@ -8,7 +8,9 @@ from app.paths import resource_dir
 
 def test_catalogue_is_consistent():
     cat = countries.catalogue()
-    assert set(cat["languages"]) == set(countries.LANGUAGES)
+    assert set(cat["languages"]) == set(countries.languages())
+    for c in cat["countries"]:
+        assert c["local_lang"] in cat["languages"], c["code"]
     ui = resource_dir() / "ui"
     for c in cat["countries"]:
         assert (ui / "flags" / f"{c['flag']}.svg").exists(), c["code"]
@@ -24,8 +26,17 @@ def test_catalogue_is_consistent():
 
 def test_locales_have_the_same_keys():
     loc = resource_dir() / "locales"
-    keys = {n: set(json.loads((loc / f"{n}.json").read_text(encoding="utf-8"))) for n in countries.LANGUAGES}
-    assert keys["el"] == keys["en"] == keys["de"]
+    keys = {n: set(json.loads((loc / f"{n}.json").read_text(encoding="utf-8"))) for n in countries.languages()}
+    assert len(keys) >= 20
+    for n, k in keys.items():
+        assert k == keys["en"], (n, sorted(k ^ keys["en"])[:5])
+    placeholders = lambda s: sorted(__import__("re").findall(r"\{\w+\}", s))
+    en = json.loads((loc / "en.json").read_text(encoding="utf-8"))
+    for n in countries.languages():
+        t = json.loads((loc / f"{n}.json").read_text(encoding="utf-8"))
+        for key, val in t.items():
+            assert placeholders(val) == placeholders(en[key]), (n, key)
+            assert "\u2013" not in val and "\u2014" not in val, (n, key)
 
 
 def test_price_per_country(tmp_path):

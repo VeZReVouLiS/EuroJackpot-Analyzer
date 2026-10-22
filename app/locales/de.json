@@ -293,5 +293,6 @@
   "sync.done": "{tickets} Scheine synchronisiert ({added} neu, {updated} aktualisiert, {removed} gelöscht).",
   "sync.error": "Synchronisierung fehlgeschlagen: {err}",
   "app.android_permission": "Erlaube der App, Updates zu installieren (auf der geöffneten Seite), und tippe erneut auf „Installieren und neu starten“.",
-  "app.android_installing": "Der Download ist fertig. Bestätige die Installation im Android-Fenster."
+  "app.android_installing": "Der Download ist fertig. Bestätige die Installation im Android-Fenster.",
+  "sync.no_data": "Wir speichern keine deiner Daten: Die Scheine liegen nur in deinem eigenen GitHub-Konto und die Anmeldung läuft vollständig über GitHub."
 }

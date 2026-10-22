@@ -13,7 +13,7 @@ An app for **Windows** (portable), **Mac**, **iPhone / iPad** and **Android** th
 - **syncs your tickets** between your devices and Home Assistant (a private gist in your GitHub account),
 - exports/imports your data (JSON, CSV) and updates itself from GitHub with one click.
 
-Greek / English / German, dark / light theme, window or full screen (F11).
+**20 languages** (the languages of all EuroJackpot countries), dark / light theme, window or full screen (F11).
 
 ![Statistics](docs/images/01-statistics-en.png)
 
@@ -43,7 +43,7 @@ On the first start the **“Choose your country”** screen appears, with the fl
 ![Country selection](docs/images/08-country-select.png)
 
 - Available now: **Greece** and **Germany**. The other countries show “coming soon” in their own language and will be added later.
-- After the country you choose a language: **the local one and English** (e.g. a German resident who only speaks English picks Germany → English).
+- After the country you choose a language: **the local one and English** (e.g. a German resident who only speaks English picks Germany → English). In Settings you can pick **any of the 20 languages**: Greek, English, German, Czech, Danish, Estonian, Spanish, Croatian, Icelandic, Italian, Latvian, Lithuanian, Hungarian, Dutch, Norwegian, Polish, Slovak, Slovenian, Finnish and Swedish. The translations other than Greek, English and German were made with AI and have not been checked by a native speaker. If something does not sound right, tell us on GitHub (Issues) and it is easy to fix.
 - The country decides **how the draws are displayed** (see below) and the **default column price**.
 - Later you can change the language from the **flag menu at the top right** (ΕΛ / EN / DE, each language written in its own language) or in Settings, where you can also change the **country**:
 
@@ -127,7 +127,7 @@ The **My tickets** tab lists every ticket you made, newest first:
 ### 7. Settings: country, language, price, theme, data, export and import
 ![Settings](docs/images/04-settings-en.png)
 
-The **country**, **language** (Greek / English / German) and **theme** (dark / light) change instantly. The **price per column** is editable for each country: €2.50 in Greece (€2.00 + €0.50 add-on), €2.00 per field in Germany plus the handling fee of the provider you play with. Enter the amount you actually pay and press “Default” to go back to the original value. The price is used for tickets and spending totals. Example with the light theme:
+The **country**, **language** (20 languages) and **theme** (dark / light) change instantly. The **price per column** is editable for each country: €2.50 in Greece (€2.00 + €0.50 add-on), €2.00 per field in Germany plus the handling fee of the provider you play with. Enter the amount you actually pay and press “Default” to go back to the original value. The price is used for tickets and spending totals. Example with the light theme:
 
 ![Light theme](docs/images/05-statistics-light-en.png)
 
@@ -170,7 +170,7 @@ The **ⓘ About** button (above the “Last updated” box, top right on a phone
 ![About](docs/images/12-about-en.png)
 
 ### 11. iPhone, iPad and Android
-The same app also works on your phone, with no account: statistics, ticket generator, ticket history with automatic prize check, next draw with countdown, country and language (Greek / English / German).
+The same app also works on your phone, with no account: statistics, ticket generator, ticket history with automatic prize check, next draw with countdown, country and language (20 languages).
 
 ![The app on an iPhone](docs/images/phone-iphone-en.png)
 

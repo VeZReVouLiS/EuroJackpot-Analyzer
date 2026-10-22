@@ -85,7 +85,7 @@ class Api:
             return s
 
     def get_locale(self, lang: str) -> dict:
-        name = lang if lang in countries.LANGUAGES else "en"
+        name = lang if lang in countries.languages() else "en"
         path = resource_dir() / "locales" / f"{name}.json"
         return json.loads(path.read_text(encoding="utf-8"))
 

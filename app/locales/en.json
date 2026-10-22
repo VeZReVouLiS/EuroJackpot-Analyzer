@@ -293,5 +293,6 @@
   "sync.done": "Synced {tickets} tickets ({added} new, {updated} updated, {removed} deleted).",
   "sync.error": "Sync failed: {err}",
   "app.android_permission": "Allow the app to install updates (on the page that opened) and press “Install and restart” again.",
-  "app.android_installing": "The download is done. Confirm the installation in the Android window."
+  "app.android_installing": "The download is done. Confirm the installation in the Android window.",
+  "sync.no_data": "We do not keep any of your data: the tickets are stored only in your own GitHub account and the sign-in is handled entirely by GitHub."
 }

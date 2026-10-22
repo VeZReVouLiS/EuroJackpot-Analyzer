@@ -7,12 +7,14 @@ from functools import lru_cache
 from . import rules
 from .paths import resource_dir
 
-LANGUAGES = ("el", "en", "de")
-
-
 @lru_cache(maxsize=1)
 def catalogue() -> dict:
     return json.loads((resource_dir() / "ui" / "countries.json").read_text(encoding="utf-8"))
+
+
+def languages() -> tuple[str, ...]:
+    """Every language of the app (one locale file each): the catalogue is the single list."""
+    return tuple(catalogue()["languages"])
 
 
 def get(code: str | None) -> dict | None:

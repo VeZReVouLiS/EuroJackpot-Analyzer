@@ -43,6 +43,11 @@ def main(ha_repo: str) -> None:
     shutil.copy(APP / "ui" / "logo.svg", assets / "logo.svg")
     for f in (APP / "ui" / "flags").iterdir():
         shutil.copy(f, assets / "flags" / f.name)
+    lang_src = APP / "ha_lang"                    # texts of the cards for the languages that are not built into the card file
+    if lang_src.exists():
+        (assets / "lang").mkdir()
+        for f in lang_src.glob("*.json"):
+            shutil.copy(f, assets / "lang" / f.name)
     print(f"synced {len(CORE_FILES)} core files and {len(compact)} draws ({out.stat().st_size // 1024} KB) -> {comp}")
 
 

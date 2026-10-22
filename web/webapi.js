@@ -126,9 +126,16 @@ export async function createApi() {
       return s;
     },
     async get_locale(lang) {
-      const name = ["el", "en", "de"].includes(lang) ? lang : "en";
-      if (!locales.has(name)) locales.set(name, await (await fetch(`locales/${name}.json`)).json());
-      return locales.get(name);
+      const load = async (n) => {
+        if (!locales.has(n)) {
+          let j = null;
+          try { const r = await fetch(`locales/${n}.json`); if (r.ok) j = await r.json(); } catch (e) { /* offline and not cached */ }
+          if (j) locales.set(n, j);
+        }
+        return locales.get(n) || null;
+      };
+      const name = /^[a-z]{2}$/.test(lang) ? lang : "en";
+      return (await load(name)) || (await load("en")) || {};
     },
     async get_countries() { return getCountries(); },
 

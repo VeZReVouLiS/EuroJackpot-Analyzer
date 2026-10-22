@@ -744,7 +744,8 @@ async function drawSync() {
       <ol class="about-list" style="margin:.8rem 0">${tr("sync.steps").split("\n").map(l => `<li>${esc(l)}</li>`).join("")}</ol>
       <div class="btn-row"><button id="sync-create" class="btn">🔑 ${tr("sync.create")}</button></div>
       <div class="sync-row"><input id="sync-token" type="password" autocomplete="off" spellcheck="false" placeholder="${tr("sync.token_ph")}"><button id="sync-connect" class="btn primary">${tr("sync.connect")}</button></div>
-      <div class="note">${tr("sync.privacy")}</div>`;
+      <div class="note">${tr("sync.privacy")}</div>
+      <div class="note">${tr("sync.no_data")}</div>`;
     $("#sync-create").onclick = () => call("open_url", "https://github.com/settings/tokens/new?scopes=gist&description=EuroJackpot+Analyzer").catch(() => {});
     $("#sync-connect").onclick = async () => {
       const b = $("#sync-connect"); b.disabled = true; b.textContent = tr("sync.running");
@@ -756,7 +757,8 @@ async function drawSync() {
     box.innerHTML = `<div class="strong" style="color:var(--good)">✔ ${tr("sync.connected")}</div>
       <div class="muted small" style="margin:.3rem 0 .8rem">${tr("sync.last")}: ${st.last ? fmtDT(st.last) : tr("top.never")}</div>
       <div class="btn-row"><button id="sync-now" class="btn primary">🔄 ${tr("sync.now")}</button><button id="sync-off" class="btn">${tr("sync.disconnect")}</button></div>
-      <div class="note">${tr("sync.privacy")}</div>`;
+      <div class="note">${tr("sync.privacy")}</div>
+      <div class="note">${tr("sync.no_data")}</div>`;
     $("#sync-now").onclick = async () => { const b = $("#sync-now"); b.disabled = true; await runSync(false); drawSync(); };
     $("#sync-off").onclick = async () => { await rawCall("sync_disconnect"); await refreshInfo(); drawSync(); };
   }
@@ -792,6 +794,25 @@ async function doAppCheck() {
   S.appUpdate = await call("check_app_update");
   updateBadge(); renderAppUpdate();
 }
+/* the release notes are markdown (bold, bullet lists, links, headings): a small safe renderer, everything is escaped first */
+function mdToHtml(md) {
+  const inline = (s) => esc(s)
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g, '<a href="$2" data-ext="$2">$1</a>');
+  const out = []; let list = false;
+  for (const raw of String(md || "").split(/\r?\n/)) {
+    const line = raw.trimEnd();
+    const li = /^\s*[-*]\s+(.*)$/.exec(line);
+    if (li) { if (!list) { out.push("<ul>"); list = true; } out.push(`<li>${inline(li[1])}</li>`); continue; }
+    if (list) { out.push("</ul>"); list = false; }
+    const h = /^#{1,6}\s+(.*)$/.exec(line);
+    if (h) out.push(`<h4>${inline(h[1])}</h4>`);
+    else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+  }
+  if (list) out.push("</ul>");
+  return out.join("");
+}
 function renderAppUpdate() {
   const out = $("#app-upd-out"); if (!out) return;
   const r = S.appUpdate;
@@ -800,10 +821,11 @@ function renderAppUpdate() {
   if (r.error) { out.innerHTML = `<div class="note">${r.error === "no releases yet" ? tr("app.no_releases") : tr("app.check_error", { err: esc(r.error) })}</div>`; return; }
   if (!r.newer) { out.innerHTML = `<div class="note" style="color:var(--good)">✔ ${tr("app.uptodate", { v: r.current })}</div>`; return; }
   out.innerHTML = `<div style="padding-top:.8rem"><div class="strong" style="color:var(--good)">⬆ ${tr("app.available", { v: r.latest, cur: r.current })}</div>
-    ${r.notes ? `<div class="muted small" style="margin-top:.5rem">${tr("app.notes")}:</div><div class="notes">${esc(r.notes)}</div>` : ""}
+    ${r.notes ? `<div class="muted small" style="margin-top:.5rem">${tr("app.notes")}:</div><div class="notes">${mdToHtml(r.notes)}</div>` : ""}
     <div class="btn-row">${r.installable ? `<button id="app-install" class="btn primary">${tr("app.install")}</button>` : `<span class="note">${tr("app.manual_install")}</span>`}
       ${r.url ? `<button id="app-page" class="btn">${tr("app.open_page")}</button>` : ""}</div>
     <div id="app-prog" class="note"></div></div>`;
+  $$("[data-ext]", out).forEach(a => a.onclick = e => { e.preventDefault(); call("open_url", a.dataset.ext).catch(() => window.open(a.dataset.ext, "_blank")); });
   const page = $("#app-page"); if (page) page.onclick = () => (window.pywebview || window.EJ_WEBAPI) ? call("open_url", r.url) : window.open(r.url, "_blank");
   const inst = $("#app-install"); if (inst) inst.onclick = () => installApp(inst);
 }
