@@ -105,8 +105,9 @@ class Api:
         return bool(s.get("sync_token"))
 
     def sync_status(self) -> dict:
-        s = self.get_settings()
-        return {"connected": self._sync_connected(s), "provider": s.get("sync_provider") or "github", "gist": s.get("sync_gist") or None,
+        connected = self._sync_connected()
+        s = self.get_settings()                 # after the check: it may have switched the provider back to GitHub
+        return {"connected": connected, "provider": s.get("sync_provider") or "github", "gist": s.get("sync_gist") or None,
                 "google_available": google_client.available(), "last": self._db.get_meta("sync_last")}
 
     def google_connect_start(self) -> dict:
