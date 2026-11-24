@@ -124,5 +124,6 @@
     "histAll": "Az összes sor együtt az előzményekben: nyeremény {won}, ár: {cost}.",
     "assumption": "A várható nyeremény a 2022 óta kifizetett valós nyeremények átlagán alapul.",
     "disclaimer": "Csak tájékoztató becslés. A húzások véletlenszerűek: minden sornak pontosan ugyanakkora az esélye, és a múlt nem jósolja meg a jövőt. Ez nem előrejelzés és nem nyereménygarancia. Játssz felelősen (18+)."
-  }
+  },
+  "clear": "Törlés"
 }

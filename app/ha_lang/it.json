@@ -124,5 +124,6 @@
     "histAll": "Tutte le colonne insieme nello storico: vincite {won} a fronte di un costo di {cost}.",
     "assumption": "Il premio atteso si basa sulla media dei premi reali dal 2022.",
     "disclaimer": "Una stima solo a scopo informativo. Le estrazioni sono casuali: ogni colonna ha esattamente le stesse probabilità e il passato non predice il futuro. Non è una previsione né una garanzia di vincita. Gioca responsabilmente (18+)."
-  }
+  },
+  "clear": "Pulisci"
 }

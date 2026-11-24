@@ -60,6 +60,7 @@
   "ticket.unlock": "Otključaj",
   "ticket.copy": "Kopiraj",
   "ticket.copied": "Kopirano!",
+  "ticket.clear": "Očisti",
   "ticket.column": "Kombinacija",
   "ticket.per_column": "po kombinaciji",
   "ticket.total": "Ukupno za listić",

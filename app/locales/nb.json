@@ -60,6 +60,7 @@
   "ticket.unlock": "Lås opp",
   "ticket.copy": "Kopier",
   "ticket.copied": "Kopiert!",
+  "ticket.clear": "Tøm",
   "ticket.column": "Rekke",
   "ticket.per_column": "per rekke",
   "ticket.total": "Kupongens totalpris",

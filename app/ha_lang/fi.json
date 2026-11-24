@@ -124,5 +124,6 @@
     "histAll": "Kaikki rivit yhdessä historiassa: voitot {won}, hinta {cost}.",
     "assumption": "Odotettu voitto perustuu todellisten palkintojen keskiarvoon vuodesta 2022.",
     "disclaimer": "Arvio vain tiedoksi. Arvonta on sattumaa: jokaisella rivillä on täsmälleen samat mahdollisuudet, eikä menneisyys ennusta tulevaa. Tämä ei ole ennuste eikä voittotakuu. Pelaa vastuullisesti (18+)."
-  }
+  },
+  "clear": "Tyhjennä"
 }

@@ -124,5 +124,6 @@
     "histAll": "Allar raðir saman í sögunni: vinningar {won} fyrir kostnað upp á {cost}.",
     "assumption": "Væntur vinningur byggist á meðaltali raunverulegra vinninga frá 2022.",
     "disclaimer": "Mat eingöngu til upplýsingar. Útdrættir eru tilviljanakenndir: hver röð hefur nákvæmlega sömu líkur og fortíðin spáir ekki fyrir um framtíðina. Þetta er hvorki spá né trygging fyrir vinningi. Spilaðu af ábyrgð (18+)."
-  }
+  },
+  "clear": "Hreinsa"
 }

@@ -60,6 +60,7 @@
   "ticket.unlock": "Avaa lukitus",
   "ticket.copy": "Kopioi",
   "ticket.copied": "Kopioitu!",
+  "ticket.clear": "Tyhjennä",
   "ticket.column": "Rivi",
   "ticket.per_column": "per rivi",
   "ticket.total": "Kupongin yhteishinta",

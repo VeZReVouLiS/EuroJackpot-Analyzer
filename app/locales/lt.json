@@ -60,6 +60,7 @@
   "ticket.unlock": "Atrakinti",
   "ticket.copy": "Kopijuoti",
   "ticket.copied": "Nukopijuota!",
+  "ticket.clear": "Išvalyti",
   "ticket.column": "Kombinacija",
   "ticket.per_column": "už kombinaciją",
   "ticket.total": "Bilieto suma",

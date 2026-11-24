@@ -60,6 +60,7 @@
   "ticket.unlock": "Aflæsa",
   "ticket.copy": "Afrita",
   "ticket.copied": "Afritað!",
+  "ticket.clear": "Hreinsa",
   "ticket.column": "Röð",
   "ticket.per_column": "á röð",
   "ticket.total": "Verð miðans alls",

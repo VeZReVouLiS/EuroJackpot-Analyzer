@@ -60,6 +60,7 @@
   "ticket.unlock": "Odblokuj",
   "ticket.copy": "Kopiuj",
   "ticket.copied": "Skopiowano!",
+  "ticket.clear": "Wyczyść",
   "ticket.column": "Zakład",
   "ticket.per_column": "za zakład",
   "ticket.total": "Razem za kupon",

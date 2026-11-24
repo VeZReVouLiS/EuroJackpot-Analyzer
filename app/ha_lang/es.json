@@ -124,5 +124,6 @@
     "histAll": "Todas las apuestas juntas en el historial: ganancias {won} con un coste de {cost}.",
     "assumption": "El premio esperado se basa en la media de los premios reales desde 2022.",
     "disclaimer": "Una estimación solo a título informativo. Los sorteos son aleatorios: todas las apuestas tienen exactamente las mismas probabilidades y el pasado no predice el futuro. No es una predicción ni una garantía de premios. Juega con responsabilidad (+18)."
-  }
+  },
+  "clear": "Limpiar"
 }

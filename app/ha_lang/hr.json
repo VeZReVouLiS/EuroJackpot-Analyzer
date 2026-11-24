@@ -124,5 +124,6 @@
     "histAll": "Sve kombinacije zajedno u povijesti: dobitak {won} uz trošak {cost}.",
     "assumption": "Očekivani dobitak temelji se na prosjeku stvarnih dobitaka od 2022.",
     "disclaimer": "Procjena samo za informaciju. Izvlačenja su slučajna: svaka kombinacija ima potpuno iste šanse, a prošlost ne predviđa budućnost. Ovo nije predviđanje niti jamstvo dobitka. Igraj odgovorno (18+)."
-  }
+  },
+  "clear": "Očisti"
 }

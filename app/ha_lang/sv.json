@@ -124,5 +124,6 @@
     "histAll": "Alla rader tillsammans i historiken: vinst {won} för en kostnad på {cost}.",
     "assumption": "Den förväntade vinsten bygger på genomsnittet av de verkliga vinsterna sedan 2022.",
     "disclaimer": "En uppskattning enbart för information. Dragningarna är slumpmässiga: varje rad har exakt samma chanser och det förflutna förutsäger inte framtiden. Det här är ingen förutsägelse eller garanti för vinst. Spela ansvarsfullt (18+)."
-  }
+  },
+  "clear": "Rensa"
 }

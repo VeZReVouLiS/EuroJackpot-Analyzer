@@ -124,5 +124,6 @@
     "histAll": "Visas kombinācijas kopā vēsturē: laimesti {won} pie izmaksām {cost}.",
     "assumption": "Paredzamais laimests balstīts uz reālo laimestu vidējo kopš 2022. gada.",
     "disclaimer": "Aptuvens aprēķins tikai informācijai. Izlozes ir nejaušas: katrai kombinācijai ir tieši tādas pašas izredzes, un pagātne neparedz nākotni. Šī nav prognoze vai laimesta garantija. Spēlē atbildīgi (18+)."
-  }
+  },
+  "clear": "Notīrīt"
 }

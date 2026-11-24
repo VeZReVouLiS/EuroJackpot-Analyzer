@@ -60,6 +60,7 @@
   "ticket.unlock": "Feloldás",
   "ticket.copy": "Másolás",
   "ticket.copied": "Másolva!",
+  "ticket.clear": "Törlés",
   "ticket.column": "Sor",
   "ticket.per_column": "soronként",
   "ticket.total": "Szelvény összesen",

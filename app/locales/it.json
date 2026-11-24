@@ -60,6 +60,7 @@
   "ticket.unlock": "Sblocca",
   "ticket.copy": "Copia",
   "ticket.copied": "Copiato!",
+  "ticket.clear": "Pulisci",
   "ticket.column": "Colonna",
   "ticket.per_column": "per colonna",
   "ticket.total": "Totale schedina",

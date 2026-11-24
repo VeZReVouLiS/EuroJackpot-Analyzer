@@ -60,6 +60,7 @@
   "ticket.unlock": "Entsperren",
   "ticket.copy": "Kopieren",
   "ticket.copied": "Kopiert!",
+  "ticket.clear": "Leeren",
   "ticket.column": "Feld",
   "ticket.per_column": "pro Feld",
   "ticket.total": "Summe Spielschein",

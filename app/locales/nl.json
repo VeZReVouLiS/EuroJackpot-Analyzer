@@ -60,6 +60,7 @@
   "ticket.unlock": "Ontgrendelen",
   "ticket.copy": "Kopiëren",
   "ticket.copied": "Gekopieerd!",
+  "ticket.clear": "Wissen",
   "ticket.column": "Rij",
   "ticket.per_column": "per rij",
   "ticket.total": "Totaal ticket",

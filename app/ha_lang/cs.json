@@ -124,5 +124,6 @@
     "histAll": "Všechny sloupce dohromady v historii: výhry {won} při ceně {cost}.",
     "assumption": "Očekávaná výhra vychází z průměru skutečných výher od roku 2022.",
     "disclaimer": "Odhad jen pro informaci. Slosování je náhodné: každý sloupec má úplně stejné šance a minulost budoucnost nepředpoví. Není to předpověď ani záruka výhry. Hraj zodpovědně (18+)."
-  }
+  },
+  "clear": "Vymazat"
 }

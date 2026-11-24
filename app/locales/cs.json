@@ -60,6 +60,7 @@
   "ticket.unlock": "Odemknout",
   "ticket.copy": "Kopírovat",
   "ticket.copied": "Zkopírováno!",
+  "ticket.clear": "Vymazat",
   "ticket.column": "Sloupec",
   "ticket.per_column": "za sloupec",
   "ticket.total": "Tiket celkem",

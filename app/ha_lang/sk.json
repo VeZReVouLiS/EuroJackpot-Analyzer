@@ -124,5 +124,6 @@
     "histAll": "Všetky stĺpce dokopy v histórii: výhry {won} pri cene {cost}.",
     "assumption": "Očakávaná výhra vychádza z priemeru skutočných výhier od roku 2022.",
     "disclaimer": "Odhad len pre informáciu. Žrebovanie je náhodné: každý stĺpec má úplne rovnaké šance a minulosť budúcnosť nepredpovie. Nie je to predpoveď ani záruka výhry. Hraj zodpovedne (18+)."
-  }
+  },
+  "clear": "Vymazať"
 }

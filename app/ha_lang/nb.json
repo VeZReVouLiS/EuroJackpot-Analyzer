@@ -124,5 +124,6 @@
     "histAll": "Alle rekker samlet i historikken: gevinst {won} for en pris på {cost}.",
     "assumption": "Den forventede gevinsten bygger på gjennomsnittet av de faktiske gevinstene siden 2022.",
     "disclaimer": "Et anslag, bare til informasjon. Trekningene er tilfeldige: hver rekke har nøyaktig de samme sjansene, og fortiden forutsier ikke fremtiden. Dette er verken en prediksjon eller en garanti for gevinst. Spill ansvarlig (18+)."
-  }
+  },
+  "clear": "Tøm"
 }

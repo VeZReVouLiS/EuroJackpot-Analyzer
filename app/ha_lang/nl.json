@@ -124,5 +124,6 @@
     "histAll": "Alle rijen samen in de geschiedenis: winst {won} bij kosten van {cost}.",
     "assumption": "De verwachte prijs is gebaseerd op het gemiddelde van de echte prijzen sinds 2022.",
     "disclaimer": "Een schatting, alleen ter informatie. Trekkingen zijn willekeurig: elke rij heeft precies dezelfde kansen en het verleden voorspelt de toekomst niet. Dit is geen voorspelling of garantie op winst. Speel verantwoord (18+)."
-  }
+  },
+  "clear": "Wissen"
 }

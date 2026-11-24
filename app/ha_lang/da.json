@@ -124,5 +124,6 @@
     "histAll": "Alle rækker samlet i historikken: gevinst {won} for en pris på {cost}.",
     "assumption": "Den forventede gevinst bygger på gennemsnittet af de faktiske gevinster siden 2022.",
     "disclaimer": "Et skøn, kun til information. Trækningerne er tilfældige: hver række har præcis de samme chancer, og fortiden forudsiger ikke fremtiden. Det er hverken en forudsigelse eller en garanti for gevinst. Spil ansvarligt (18+)."
-  }
+  },
+  "clear": "Ryd"
 }

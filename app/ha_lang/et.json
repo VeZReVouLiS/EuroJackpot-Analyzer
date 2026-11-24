@@ -124,5 +124,6 @@
     "histAll": "Kõik read koos ajaloos: võidud {won}, hind {cost}.",
     "assumption": "Oodatav võit põhineb tegelike võitude keskmisel alates 2022.",
     "disclaimer": "Hinnang on ainult informatiivne. Loosimine on juhuslik: igal real on täpselt samad võimalused ja minevik ei ennusta tulevikku. See ei ole ennustus ega võidugarantii. Mängi vastutustundlikult (18+)."
-  }
+  },
+  "clear": "Tühjenda"
 }

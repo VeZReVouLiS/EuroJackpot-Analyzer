@@ -491,13 +491,14 @@ function drawTicket() {
   out.innerHTML = `<div class="cols">${tk.columns.map((c, i) => `
     <div class="col-row ${S.locks[i] ? "locked" : ""}">
       <span class="col-no">${tr("ticket.column")} ${i + 1}</span>${balls(c)}
-      <span class="col-tag">${tr("algo.short." + c.algo)}</span>
+      <span class="col-tag" title="${esc(algoLabel(c.algo))}">${tr("algo.short." + c.algo)}</span>
       <button class="icon-btn" data-lock="${i}" title="${S.locks[i] ? tr("ticket.unlock") : tr("ticket.lock")}">${S.locks[i] ? "🔒" : "🔓"}</button>
       <button class="icon-btn" data-regen="${i}" title="${tr("ticket.regen")}">🔄</button>
       <span class="col-price">${money(tk.price_per_column)}</span></div>`).join("")}</div>
     <div class="total"><div><div class="muted">${tr("ticket.total")}</div><div>${tk.columns.length} × ${money(tk.price_per_column)}</div></div>
       <div class="sum">${money(tk.total)}</div>
-      <button id="copy" class="btn">📋 ${tr("ticket.copy")}</button></div>
+      <button id="copy" class="btn">📋 ${tr("ticket.copy")}</button>
+      <button id="clear" class="btn">🧹 ${tr("ticket.clear")}</button></div>
     <div class="saved card">
       <div><b>💾 ${tr("tk.saved")}</b> · ${tr("tk.for_draw")}:
         <select id="tk-target">${[...new Set([tk.target_date, ...(S.nextDraws || [])])].sort().map(d => `<option value="${d}" ${d === tk.target_date ? "selected" : ""}>${fmtDay(d)}</option>`).join("")}</select></div>
@@ -508,6 +509,11 @@ function drawTicket() {
   $$("[data-lock]", out).forEach(b => b.onclick = () => { const i = +b.dataset.lock; S.locks[i] = !S.locks[i]; drawTicket(); });
   $$("[data-regen]", out).forEach(b => b.onclick = () => { const i = +b.dataset.regen;
     generate(tk.columns.map((c, j) => j === i ? null : c)); });
+  $("#clear").onclick = async () => {        // forget the generated ticket (an unplayed suggestion leaves the history too, a played one stays) to start a new one
+    try { if (!tk.played) await call("delete_ticket", tk.id); } catch (e) { toast(e.message || String(e)); }
+    S.ticket = null; S.locks = {};
+    drawTicket();
+  };
   $("#copy").onclick = async () => {
     const text = tk.columns.map((c, i) => `${tr("ticket.column")} ${i + 1}: ${c.main.join(" ")} + ${c.euro.join(" ")}`).join("\n") + `\n${tr("ticket.total")}: ${money(tk.total)}`;
     try { await navigator.clipboard.writeText(text); toast(tr("ticket.copied")); } catch { toast(text); }

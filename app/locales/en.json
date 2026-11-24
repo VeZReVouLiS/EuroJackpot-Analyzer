@@ -60,6 +60,7 @@
   "ticket.unlock": "Unlock",
   "ticket.copy": "Copy",
   "ticket.copied": "Copied!",
+  "ticket.clear": "Clear",
   "ticket.column": "Column",
   "ticket.per_column": "per column",
   "ticket.total": "Ticket total",

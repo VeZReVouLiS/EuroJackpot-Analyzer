@@ -124,5 +124,6 @@
     "histAll": "Visos kombinacijos kartu istorijoje: laimėjimai {won} už {cost} kainą.",
     "assumption": "Tikėtinas laimėjimas pagrįstas realių laimėjimų vidurkiu nuo 2022 m.",
     "disclaimer": "Apytikslis įvertis, skirtas tik informacijai. Traukimai yra atsitiktiniai: kiekviena kombinacija turi lygiai tokius pačius šansus, o praeitis neprognozuoja ateities. Tai nėra prognozė ar laimėjimo garantija. Žaisk atsakingai (18+)."
-  }
+  },
+  "clear": "Išvalyti"
 }

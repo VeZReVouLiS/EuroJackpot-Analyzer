@@ -60,6 +60,7 @@
   "ticket.unlock": "Lås upp",
   "ticket.copy": "Kopiera",
   "ticket.copied": "Kopierat!",
+  "ticket.clear": "Rensa",
   "ticket.column": "Rad",
   "ticket.per_column": "per rad",
   "ticket.total": "Kupongens totalsumma",

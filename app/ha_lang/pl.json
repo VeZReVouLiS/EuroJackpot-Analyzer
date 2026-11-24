@@ -124,5 +124,6 @@
     "histAll": "Wszystkie zakłady razem w historii: wygrana {won} przy koszcie {cost}.",
     "assumption": "Oczekiwana wygrana opiera się na średniej rzeczywistych wygranych od 2022.",
     "disclaimer": "Szacunek wyłącznie informacyjny. Losowania są losowe: każdy zakład ma dokładnie takie same szanse, a przeszłość nie przewiduje przyszłości. To nie jest prognoza ani gwarancja wygranej. Graj odpowiedzialnie (18+)."
-  }
+  },
+  "clear": "Wyczyść"
 }

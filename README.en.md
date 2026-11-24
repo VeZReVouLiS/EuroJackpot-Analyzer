@@ -87,7 +87,7 @@ In the **Draws** menu you first see the **“Next draw”** box with the date an
    - *Automatic - one random algorithm per ticket*, or *a random algorithm per column*.
    - *Pure random, Hot numbers, Cold numbers, Overdue numbers, Frequency-weighted, Balanced, Smart shape (odd/even, sum)*.
 3. Press **Generate ticket**. Next to every column you see the algorithm that created it and its price (€2.50 in Greece, €2.00 in Germany, or the price you set in Settings). Below is the **ticket total**.
-4. 🔒 locks a column you like, 🔄 regenerates only that one, and **Copy** puts the whole ticket on the clipboard as text.
+4. 🔒 locks a column you like, 🔄 regenerates only that one, **Copy** puts the whole ticket on the clipboard as text and **🧹 Clear** removes what is shown so you can make a new one whenever you like (an unplayed ticket also leaves the history, one marked as played stays there).
 5. At the bottom you see that the ticket was **saved to your history** for the next draw (you can pick another date). If you really play it, press **“I played it”**.
    As long as it is not marked as played, generating again replaces the suggestion instead of filling the history.
 

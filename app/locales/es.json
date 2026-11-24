@@ -60,6 +60,7 @@
   "ticket.unlock": "Desbloquear",
   "ticket.copy": "Copiar",
   "ticket.copied": "¡Copiado!",
+  "ticket.clear": "Limpiar",
   "ticket.column": "Apuesta",
   "ticket.per_column": "por apuesta",
   "ticket.total": "Total del boleto",
